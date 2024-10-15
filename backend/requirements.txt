@@ -1,0 +1,6 @@
+express
+mysql2
+sequelize
+multer
+nodemon
+dotenv
