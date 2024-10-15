@@ -7,16 +7,17 @@ exports.uploadPlan = (req, res) => {
     return res.status(400).json({ error: 'Aucun fichier reçu' });
   }
 
-  const imagePath = req.file.path;
+  const imagePath = `uploads/${req.file.filename}`;  // Chemin relatif
 
   Plan.create({ imagePath })
     .then(plan => {
-      res.status(201).json(plan);
+      res.status(201).json({ imagePath });  // Renvoie seulement le chemin relatif dans la réponse
     })
     .catch(error => {
       res.status(400).json({ error: error.message });
     });
 };
+
 
 // Sauvegarde des données du formulaire
 exports.saveFormData = (req, res) => {

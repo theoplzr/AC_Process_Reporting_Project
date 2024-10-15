@@ -7,10 +7,10 @@ const path = require('path');
 // Configuration de multer pour l'upload d'image
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');  // Assurez-vous que ce dossier existe
+    cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));  // Nom unique avec timestamp
+    cb(null, Date.now() + path.extname(file.originalname));
   }
 });
 

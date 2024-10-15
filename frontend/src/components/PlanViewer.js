@@ -23,7 +23,7 @@ const PlanViewer = ({ planUrl }) => {
   return (
     <div style={{ position: 'relative' }}>
       <img
-        src={`http://localhost:3000/${planUrl}`}
+        src={`http://localhost:3307/${planUrl}`}
         alt="Plan d'incinérateur"
         onClick={handleClick}
         style={{ width: '100%', cursor: 'pointer' }}

@@ -14,18 +14,18 @@ const PlanUploader = ({ onUpload }) => {
       console.error('Aucun fichier sélectionné');
       return;
     }
-
+  
     const formData = new FormData();
-    formData.append('plan', selectedFile);
-
+    formData.append('plan', selectedFile);  // 'plan' doit correspondre au nom du champ dans multer
+  
     try {
-      const response = await fetch('http://localhost:3000/api/plans/upload', {
+      const response = await fetch('http://localhost:3307/api/plans/upload', {
         method: 'POST',
         body: formData,
       });
       const result = await response.json();
       if (response.ok) {
-        onUpload(result); // Retourner l'URL du plan au composant parent
+        onUpload(result);
       } else {
         console.error('Erreur lors du téléchargement du plan', result);
       }
@@ -33,6 +33,7 @@ const PlanUploader = ({ onUpload }) => {
       console.error('Erreur lors de l\'upload du plan :', error);
     }
   };
+  
 
   return (
     <form onSubmit={handleSubmit}>

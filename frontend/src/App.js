@@ -2,12 +2,13 @@
 import React, { useState } from 'react';
 import PlanUploader from './components/PlanUploader';
 import PlanViewer from './components/PlanViewer';
+import './App.css'; // Si tu utilises Tailwind ou des styles personnalisés
 
 function App() {
   const [planUrl, setPlanUrl] = useState(null);
 
   const handleUpload = (plan) => {
-    setPlanUrl(plan.imagePath);  // L'URL de l'image uploadée est stockée ici
+    setPlanUrl(plan.imagePath);
   };
 
   return (
