@@ -1,4 +1,3 @@
-// components/PlanViewer.js
 import React, { useState } from 'react';
 import FormPopup from './FormPopup';
 
@@ -21,26 +20,18 @@ const PlanViewer = ({ planUrl }) => {
   };
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="relative bg-gray-100 shadow-lg rounded-lg overflow-hidden">
       <img
         src={`http://localhost:3307/${planUrl}`}
         alt="Plan d'incinérateur"
         onClick={handleClick}
-        style={{ width: '100%', cursor: 'pointer' }}
+        className="w-full rounded-lg shadow-lg cursor-pointer hover:opacity-90 transition-opacity duration-300"
       />
       {points.map((point, index) => (
         <div
           key={index}
-          style={{
-            position: 'absolute',
-            left: `${point.x}px`,
-            top: `${point.y}px`,
-            width: '10px',
-            height: '10px',
-            backgroundColor: 'blue',
-            borderRadius: '50%',
-            animation: 'pulse 1.5s infinite',
-          }}
+          className="absolute bg-blue-500 rounded-full w-4 h-4 animate-pulse shadow-lg"
+          style={{ left: `${point.x}px`, top: `${point.y}px` }}
         />
       ))}
       {formVisible && (

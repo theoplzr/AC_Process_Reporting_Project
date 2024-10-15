@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import PlanUploader from './components/PlanUploader';
 import PlanViewer from './components/PlanViewer';
-import './App.css'; // Si tu utilises Tailwind ou des styles personnalisés
+import './css/App.css'; // Si tu utilises Tailwind ou des styles personnalisés
 
 function App() {
   const [planUrl, setPlanUrl] = useState(null);

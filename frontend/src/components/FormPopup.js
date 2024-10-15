@@ -1,4 +1,3 @@
-// components/FormPopup.js
 import React, { useState } from 'react';
 
 const FormPopup = ({ position, onSubmit }) => {
@@ -12,25 +11,27 @@ const FormPopup = ({ position, onSubmit }) => {
   return (
     <div
       style={{
-        position: 'absolute',
+        position: 'absolute', // Position absolue pour ne pas affecter les autres éléments
         left: `${position.x}px`,
         top: `${position.y}px`,
-        backgroundColor: 'white',
-        padding: '10px',
-        border: '1px solid black',
-        zIndex: 1000,
+        zIndex: 1000, // S'assurer que le formulaire est au-dessus de tout
       }}
+      className="bg-white p-4 rounded-lg shadow-lg border border-gray-200"
     >
-      <form onSubmit={handleSubmit}>
-        <label>
-          Réponse :
-          <input
-            type="text"
-            value={response}
-            onChange={(e) => setResponse(e.target.value)}
-          />
-        </label>
-        <button type="submit">Soumettre</button>
+      <form onSubmit={handleSubmit} className="flex flex-col space-y-2">
+        <label className="font-semibold">Réponse :</label>
+        <input
+          type="text"
+          value={response}
+          onChange={(e) => setResponse(e.target.value)}
+          className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          type="submit"
+          className="bg-blue-500 text-white py-2 px-4 rounded shadow hover:bg-blue-600 transition"
+        >
+          Soumettre
+        </button>
       </form>
     </div>
   );

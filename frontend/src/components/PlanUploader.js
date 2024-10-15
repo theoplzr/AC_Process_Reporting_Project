@@ -1,5 +1,5 @@
-// components/PlanUploader.js
 import React, { useState } from 'react';
+import '../css/PlanUploader.css';
 
 const PlanUploader = ({ onUpload }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -14,10 +14,10 @@ const PlanUploader = ({ onUpload }) => {
       console.error('Aucun fichier sélectionné');
       return;
     }
-  
+
     const formData = new FormData();
-    formData.append('plan', selectedFile);  // 'plan' doit correspondre au nom du champ dans multer
-  
+    formData.append('plan', selectedFile);
+
     try {
       const response = await fetch('http://localhost:3307/api/plans/upload', {
         method: 'POST',
@@ -33,12 +33,22 @@ const PlanUploader = ({ onUpload }) => {
       console.error('Erreur lors de l\'upload du plan :', error);
     }
   };
-  
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input type="file" accept="image/*" onChange={handleFileChange} />
-      <button type="submit">Charger le plan</button>
+    <form onSubmit={handleSubmit} className="flex flex-col items-center space-y-6 bg-gradient-to-r from-gray-100 via-gray-50 to-gray-200 p-8 rounded-lg shadow-xl">
+      <h2 className="text-2xl font-semibold text-gray-700">Télécharger un plan</h2>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="block w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      />
+      <button
+        type="submit"
+        className="bg-indigo-600 text-white py-2 px-6 rounded-lg shadow-lg hover:bg-indigo-700 transform transition duration-300 ease-in-out hover:scale-105"
+      >
+        Charger le plan
+      </button>
     </form>
   );
 };
