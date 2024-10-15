@@ -1,0 +1,105 @@
+/* FormPopup.css */
+
+/* Style global pour le conteneur du formulaire */
+.form-popup-container {
+    position: absolute;
+    background-color: #ffffff;
+    padding: 1.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    width: 350px;
+    animation: fadeIn 0.4s ease-in-out;
+  }
+  
+  /* Animation d'apparition */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Titre du formulaire */
+  .form-popup-container h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+    text-align: center;
+    text-transform: uppercase;
+  }
+  
+  /* Style des champs du formulaire */
+  .form-popup-container input,
+  .form-popup-container textarea,
+  .form-popup-container select {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    color: #4b5563;
+    background-color: #f9fafb;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .form-popup-container input:focus,
+  .form-popup-container textarea:focus,
+  .form-popup-container select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
+  }
+  
+  /* Style du bouton de soumission */
+  .form-popup-container button {
+    padding: 0.75rem 1.5rem;
+    background-color: #6366f1;
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .form-popup-container button:hover {
+    background-color: #4f46e5;
+    transform: scale(1.05);
+  }
+  
+  .form-popup-container button:active {
+    background-color: #4338ca;
+    transform: scale(0.95);
+  }
+  
+  /* Style pour l'upload de photo */
+  .form-popup-container input[type="file"] {
+    background-color: #ffffff;
+    border: 2px dashed #d1d5db;
+    padding: 1rem;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+  }
+  
+  .form-popup-container input[type="file"]:hover {
+    border-color: #3b82f6;
+  }
+  
+  /* Message d'erreur */
+  .form-popup-container .error-message {
+    color: #ef4444;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  
