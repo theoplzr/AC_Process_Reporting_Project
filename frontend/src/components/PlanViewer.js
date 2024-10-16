@@ -61,12 +61,12 @@ const PlanViewer = ({ planUrl }) => {
   };
 
   return (
-    <div className="relative bg-gray-100 shadow-lg rounded-lg overflow-hidden">
+    <div className="relative bg-gray-100 shadow-lg rounded-lg overflow-hidden p-4 max-w-3xl mx-auto">
       <img
         src={`http://localhost:3307/${planUrl}`}
         alt="Plan d'incinérateur"
         onClick={handleClick}
-        className="w-full rounded-lg shadow-lg cursor-pointer hover:opacity-90 transition-opacity duration-300"
+        className="w-full rounded-lg cursor-pointer shadow-lg hover:opacity-90 hover:scale-105 transition-all duration-300"
       />
       {points.map((point, index) => (
         <div

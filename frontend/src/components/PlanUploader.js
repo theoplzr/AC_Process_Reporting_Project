@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import '../css/PlanUploader.css';
 
 const PlanUploader = ({ onUpload }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -35,17 +34,22 @@ const PlanUploader = ({ onUpload }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col items-center space-y-6 bg-gradient-to-r from-gray-100 via-gray-50 to-gray-200 p-8 rounded-lg shadow-xl">
-      <h2 className="text-2xl font-semibold text-gray-700">Télécharger un plan</h2>
+    <form 
+      onSubmit={handleSubmit} 
+      className="flex flex-col items-center bg-gradient-to-r from-gray-100 via-gray-50 to-gray-200 p-8 rounded-lg shadow-xl space-y-6"
+    >
+      <h2 className="text-2xl font-semibold text-gray-700 uppercase tracking-wide hover:text-indigo-700 transition-colors">
+        Télécharger un plan
+      </h2>
       <input
         type="file"
         accept="image/*"
         onChange={handleFileChange}
-        className="block w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="block w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 hover:border-indigo-500 transition"
       />
       <button
         type="submit"
-        className="bg-indigo-600 text-white py-2 px-6 rounded-lg shadow-lg hover:bg-indigo-700 transform transition duration-300 ease-in-out hover:scale-105"
+        className="bg-indigo-600 text-white py-2 px-6 rounded-lg shadow-lg hover:bg-indigo-700 transform transition-transform duration-300 hover:scale-105"
       >
         Charger le plan
       </button>

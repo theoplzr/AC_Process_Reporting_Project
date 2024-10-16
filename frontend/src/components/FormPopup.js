@@ -41,11 +41,11 @@ const FormPopup = ({ position, onSubmit, onDelete, existingData }) => {
     <div
       style={{
         position: 'absolute',
-        left: `${position.x + 150}px`, // Déplacer le formulaire plus loin de l'image pour garantir la visibilité
+        left: `${position.x + 150}px`,
         top: `${position.y}px`,
         zIndex: 1000,
       }}
-      className="bg-white p-4 rounded-lg shadow-lg border border-gray-200 max-w-sm"
+      className="bg-white p-6 rounded-lg shadow-lg border border-gray-200 max-w-sm animate-fadeIn"
     >
       <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
         <label className="font-semibold text-gray-700">Réponse :</label>
@@ -74,7 +74,7 @@ const FormPopup = ({ position, onSubmit, onDelete, existingData }) => {
             <button
               type="button"
               onClick={handleDeletePhoto}
-              className="mt-2 bg-red-500 text-white py-2 px-4 rounded shadow hover:bg-red-600 transition"
+              className="mt-2 bg-red-500 text-white py-2 px-4 rounded shadow hover:bg-red-600 transition transform hover:scale-105"
             >
               Supprimer la photo
             </button>
@@ -84,14 +84,14 @@ const FormPopup = ({ position, onSubmit, onDelete, existingData }) => {
         <div className="flex justify-between mt-4">
           <button
             type="submit"
-            className="bg-blue-500 text-white py-2 px-4 rounded shadow hover:bg-blue-600 transition"
+            className="bg-blue-500 text-white py-2 px-4 rounded shadow hover:bg-blue-600 transition transform hover:scale-105"
           >
             Soumettre
           </button>
           <button
             type="button"
             onClick={onDelete}
-            className="bg-red-500 text-white py-2 px-4 rounded shadow hover:bg-red-600 transition"
+            className="bg-red-500 text-white py-2 px-4 rounded shadow hover:bg-red-600 transition transform hover:scale-105"
           >
             Supprimer
           </button>
