@@ -1,102 +1,174 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { FiXCircle, FiSave, FiTrash2 } from 'react-icons/fi';
 
-const FormPopup = ({ position, onSubmit, onDelete, existingData }) => {
+const FormPopup = ({ onSubmit, onDelete, onClose, existingData }) => {
+  // Définition des états pour chaque champ du formulaire et des photos
   const [response, setResponse] = useState('');
-  const [photo, setPhoto] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [materials, setMaterials] = useState('');
+  const [practices, setPractices] = useState('');
+  const [anomalies, setAnomalies] = useState('');
+  const [maintenance, setMaintenance] = useState('');
+  const [severity, setSeverity] = useState('green');
+  const [photos, setPhotos] = useState([]);
+  const [previews, setPreviews] = useState([]);
+  const [error, setError] = useState('');
+  const formRef = useRef(null);
 
+  // Remplissage des champs du formulaire avec les données existantes (si présentes)
   useEffect(() => {
     if (existingData) {
       setResponse(existingData.response || '');
-      if (existingData.photo) {
-        setPhoto(existingData.photo);
-        setPreview(existingData.photo);
+      setMaterials(existingData.materials || '');
+      setPractices(existingData.practices || '');
+      setAnomalies(existingData.anomalies || '');
+      setMaintenance(existingData.maintenance || '');
+      setSeverity(existingData.severity || 'green');
+
+      // Prévisualisation des photos existantes
+      if (existingData.photos) {
+        const initialPreviews = existingData.photos.map(photo =>
+          typeof photo === 'string' ? photo : URL.createObjectURL(photo)
+        );
+        setPhotos(existingData.photos);
+        setPreviews(initialPreviews);
       }
     }
   }, [existingData]);
 
+  // Gestion des uploads de photos et des prévisualisations
   const handlePhotoChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
+    const files = Array.from(event.target.files);
+    files.forEach((file) => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-        setPhoto(reader.result);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = () => {
+          const isLandscape = img.width > img.height;
+          const imagePreview = {
+            src: e.target.result,
+            orientation: isLandscape ? 'landscape' : 'portrait',
+          };
+          setPhotos((prevPhotos) => [...prevPhotos, file]);
+          setPreviews((prevPreviews) => [...prevPreviews, imagePreview]);
+        };
       };
       reader.readAsDataURL(file);
+    });
+  };
+
+  // Suppression d'une photo sélectionnée
+  const handleDeletePhoto = (index) => {
+    const newPhotos = [...photos];
+    const newPreviews = [...previews];
+    newPhotos.splice(index, 1);
+    newPreviews.splice(index, 1);
+    setPhotos(newPhotos);
+    setPreviews(newPreviews);
+  };
+
+  // Validation des champs obligatoires avant de fermer le formulaire
+  const handleCloseForm = () => {
+    if (!response || !materials || !practices || !anomalies || !maintenance) {
+      setError('Tous les champs sont obligatoires.');
+      return;
     }
+    onSubmit({ response, materials, practices, anomalies, maintenance, severity, photos });
+    onClose();
   };
 
-  const handleDeletePhoto = () => {
-    setPhoto(null);
-    setPreview(null);
-  };
-
+  // Gestion de la soumission du formulaire
   const handleSubmit = (event) => {
     event.preventDefault();
-    onSubmit({ response, photo });
+    if (!response || !materials || !practices || !anomalies || !maintenance) {
+      setError('Tous les champs sont obligatoires.');
+      return;
+    }
+    onSubmit({ response, materials, practices, anomalies, maintenance, severity, photos });
   };
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        left: `${position.x + 150}px`,
-        top: `${position.y}px`,
-        zIndex: 1000,
-      }}
-      className="bg-white p-6 rounded-lg shadow-lg border border-gray-200 max-w-sm animate-fadeIn"
-    >
-      <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
-        <label className="font-semibold text-gray-700">Réponse :</label>
-        <input
-          type="text"
-          value={response}
-          onChange={(e) => setResponse(e.target.value)}
-          className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-        />
-        
-        <label className="font-semibold text-gray-700">Photo :</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handlePhotoChange}
-          className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-        />
-        
-        {preview && (
-          <div className="mt-2">
-            <img
-              src={preview}
-              alt="Prévisualisation"
-              className="w-full h-auto rounded shadow"
-            />
-            <button
-              type="button"
-              onClick={handleDeletePhoto}
-              className="mt-2 bg-red-500 text-white py-2 px-4 rounded shadow hover:bg-red-600 transition transform hover:scale-105"
-            >
-              Supprimer la photo
+    <div style={{
+      position: 'absolute',
+      top: '10%',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 1000,
+      width: '100%',
+      maxWidth: '600px',
+    }}
+    className="bg-white rounded-xl shadow-lg border border-gray-200 w-full animate-fadeIn">
+      {/* En-tête du formulaire */}
+      <div className="flex justify-between items-center bg-gray-100 p-4 rounded-t-xl">
+        <h2 className="text-lg font-bold text-gray-700 tracking-wider">Supervision</h2>
+        <button onClick={handleCloseForm} className="text-gray-500 hover:text-gray-700 transition-colors hover:animate-pulse">
+          <FiXCircle size={24} />
+        </button>
+      </div>
+
+      {/* Contenu du formulaire */}
+      <div ref={formRef} className="overflow-auto p-6" style={{ maxHeight: '80vh' }}>
+        {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
+        <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+
+          {/* Champs de texte pour les différentes étapes de la supervision */}
+          {/* Chaque champ représente une section du rapport (matériaux, bonnes pratiques, etc.) */}
+          <div>
+            <label className="font-semibold text-gray-700 tracking-wider">Étapes de reconstruction/réparation :</label>
+            <textarea value={response} onChange={(e) => setResponse(e.target.value)}
+              className="mt-2 p-3 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800" rows="4" />
+          </div>
+
+          {/* ... autres champs */}
+
+          {/* Sélecteur de gravité avec code couleur */}
+          <div>
+            <label className="font-semibold text-gray-700 tracking-wider">Gravité de la supervision :</label>
+            <div className="flex items-center space-x-2">
+              <select value={severity} onChange={(e) => setSeverity(e.target.value)}
+                className="mt-2 p-3 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="red">Non-conformité majeure</option>
+                <option value="orange">Non-conformité mineure</option>
+                <option value="lightgreen">Améliorable</option>
+                <option value="green">Conforme</option>
+              </select>
+              <div className={`w-6 h-6 rounded-full ${severity === 'red' ? 'bg-red-600' : severity === 'orange' ? 'bg-orange-500' : severity === 'lightgreen' ? 'bg-green-300' : 'bg-green-600'}`} />
+            </div>
+          </div>
+
+          {/* Upload des photos */}
+          <div>
+            <label className="font-semibold text-gray-700 tracking-wider">Photos :</label>
+            <input type="file" accept="image/*" multiple onChange={handlePhotoChange}
+              className="mt-2 p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          {/* Prévisualisation des photos uploadées */}
+          {previews.length > 0 && (
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              {previews.map((preview, index) => (
+                <div key={index} className="relative">
+                  <img src={preview.src} alt={`Preview ${index}`} className={`w-full h-auto rounded-lg shadow ${preview.orientation === 'landscape' ? 'max-w-full' : 'max-h-60'}`} />
+                  <button type="button" onClick={() => handleDeletePhoto(index)}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-transform transform hover:scale-110 hover:animate-pulse">
+                    <FiTrash2 size={20} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Boutons de soumission et suppression */}
+          <div className="flex justify-between mt-6 space-x-4">
+            <button type="submit" className="flex items-center justify-center bg-green-500 text-white py-2 px-6 rounded-lg shadow hover:bg-green-600 transition-transform transform hover:scale-105 hover:animate-pulse">
+              <FiSave className="mr-2" /> Sauvegarder
+            </button>
+            <button type="button" onClick={onDelete} className="flex items-center justify-center bg-red-500 text-white py-2 px-6 rounded-lg shadow hover:bg-red-600 transition-transform transform hover:scale-105 hover:animate-pulse">
+              <FiTrash2 className="mr-2" /> Supprimer
             </button>
           </div>
-        )}
-
-        <div className="flex justify-between mt-4">
-          <button
-            type="submit"
-            className="bg-blue-500 text-white py-2 px-4 rounded shadow hover:bg-blue-600 transition transform hover:scale-105"
-          >
-            Soumettre
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="bg-red-500 text-white py-2 px-4 rounded shadow hover:bg-red-600 transition transform hover:scale-105"
-          >
-            Supprimer
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };

@@ -1,88 +1,121 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import FormPopup from './FormPopup';
+import { FiRefreshCw } from 'react-icons/fi'; // Icone pour réinitialiser les points
 
 const PlanViewer = ({ planUrl }) => {
   const [formVisible, setFormVisible] = useState(false);
   const [clickPosition, setClickPosition] = useState(null);
   const [points, setPoints] = useState([]);
-  const [editingPoint, setEditingPoint] = useState(null); // Point actuellement modifié
+  const [editingPoint, setEditingPoint] = useState(null);
 
-  // Fonction pour sauvegarder les points dans le Local Storage
-  const savePointsToLocalStorage = (points) => {
-    localStorage.setItem('savedPoints', JSON.stringify(points));
-  };
-
-  // Récupération des points depuis le Local Storage lors du chargement du composant
-  useEffect(() => {
-    const storedPoints = localStorage.getItem('savedPoints');
-    if (storedPoints) {
-      setPoints(JSON.parse(storedPoints));
-    }
-  }, []);
-
+  // Gérer le clic sur l'image pour ajouter un nouveau point
   const handleClick = (event) => {
     const rect = event.target.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     setClickPosition({ x, y });
     setFormVisible(true);
-    setEditingPoint(null); // Réinitialiser la modification
+    setEditingPoint(null); // Désactiver l'édition lors de l'ajout d'un nouveau point
   };
 
+  // Soumission des données du formulaire de point
   const handleFormSubmit = (data) => {
-    let updatedPoints;
-    if (editingPoint !== null) {
-      // Si nous éditons un point, mettons à jour le point
-      updatedPoints = points.map((point, index) =>
-        index === editingPoint ? { ...point, data } : point
-      );
-    } else {
-      // Sinon, ajoutons un nouveau point
-      updatedPoints = [...points, { x: clickPosition.x, y: clickPosition.y, data }];
-    }
+    const updatedPoints = editingPoint !== null 
+      ? points.map((point, index) =>
+          index === editingPoint ? { ...point, data } : point
+        )
+      : [...points, { x: clickPosition.x, y: clickPosition.y, data, index: points.length + 1 }];
+    
     setPoints(updatedPoints);
     setFormVisible(false);
-    savePointsToLocalStorage(updatedPoints); // Sauvegarde dans le Local Storage
   };
 
+  // Suppression d'un point
   const handleDeletePoint = () => {
     if (editingPoint !== null) {
       const updatedPoints = points.filter((_, index) => index !== editingPoint);
       setPoints(updatedPoints);
-      setFormVisible(false); // Fermer le formulaire
-      savePointsToLocalStorage(updatedPoints); // Sauvegarde dans le Local Storage
+      setFormVisible(false);
     }
   };
 
+  // Gestion du clic sur un point pour l'éditer
   const handlePointClick = (index) => {
     setClickPosition({ x: points[index].x, y: points[index].y });
     setFormVisible(true);
-    setEditingPoint(index); // Référence au point en cours de modification
+    setEditingPoint(index); // Activer le mode édition lors du clic sur un point existant
+  };
+
+  // Réinitialisation des points
+  const resetPoints = () => {
+    setPoints([]); // Réinitialiser tous les points
+  };
+
+  // Définir la couleur du point selon la gravité
+  const getColorFromSeverity = (severity) => {
+    switch (severity) {
+      case 'red':
+        return 'bg-red-600';
+      case 'orange':
+        return 'bg-orange-500';
+      case 'lightgreen':
+        return 'bg-green-300';
+      case 'green':
+        return 'bg-green-600';
+      default:
+        return 'bg-gray-400';
+    }
   };
 
   return (
-    <div className="relative bg-gray-100 shadow-lg rounded-lg overflow-hidden p-4 max-w-3xl mx-auto">
-      <img
-        src={`http://localhost:3307/${planUrl}`}
-        alt="Plan d'incinérateur"
-        onClick={handleClick}
-        className="w-full rounded-lg cursor-pointer shadow-lg hover:opacity-90 hover:scale-105 transition-all duration-300"
-      />
-      {points.map((point, index) => (
-        <div
-          key={index}
-          className="absolute bg-blue-500 rounded-full w-4 h-4 animate-pulse shadow-lg cursor-pointer"
-          style={{ left: `${point.x}px`, top: `${point.y}px` }}
-          onClick={() => handlePointClick(index)} // Revenir au formulaire sur clic
+    <div className="flex flex-col items-center bg-gray-900 min-h-screen p-6">
+      {/* Bouton pour réinitialiser les points */}
+      <div className="flex justify-end w-full max-w-4xl">
+        <button
+          onClick={resetPoints}
+          className="flex items-center text-white bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg shadow-md transition transform hover:scale-105 mb-4"
+        >
+          <FiRefreshCw className="mr-2" /> Réinitialiser les points
+        </button>
+      </div>
+
+      {/* Conteneur d'image */}
+      <div className="relative w-full max-w-4xl">
+        <img
+          src={`http://localhost:3307/${planUrl}`}  // L'URL de l'image téléchargée
+          alt="Plan"
+          onClick={handleClick}
+          className="w-auto h-auto max-w-full rounded-lg cursor-crosshair shadow-xl"
+          style={{ objectFit: 'contain' }}  // Contenir l'image sans distorsion
         />
-      ))}
-      {formVisible && (
-        <FormPopup
-          position={clickPosition}
-          onSubmit={handleFormSubmit}
-          onDelete={handleDeletePoint} // Supprimer un point
-          existingData={editingPoint !== null ? points[editingPoint].data : null} // Pré-remplir avec les données
-        />
+        {points.map((point, index) => (
+          <div
+            key={index}
+            className={`absolute rounded-full w-8 h-8 flex items-center justify-center text-white font-bold shadow-lg cursor-pointer transition-transform duration-300 hover:scale-125 ${getColorFromSeverity(point.data.severity)}`}
+            style={{ left: `${point.x}px`, top: `${point.y}px` }}
+            onClick={() => handlePointClick(index)}
+          >
+            {point.index} {/* Afficher le numéro du point */}
+          </div>
+        ))}
+        {formVisible && (
+          <div className="transition-opacity duration-300 opacity-100">
+            <FormPopup
+              position={clickPosition}
+              onSubmit={handleFormSubmit}
+              onDelete={handleDeletePoint}
+              onClose={() => setFormVisible(false)}
+              existingData={editingPoint !== null ? points[editingPoint].data : null}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Message d'information si aucun point n'est ajouté */}
+      {!points.length && (
+        <p className="text-white text-sm mt-4 animate-pulse">
+          Cliquez sur l'image pour ajouter un point.
+        </p>
       )}
     </div>
   );

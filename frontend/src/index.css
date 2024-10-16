@@ -1,3 +1,64 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Palette de couleurs sobres pour un design plus tech */
+.bg-gray-800 {
+  background-color: #1F2937;
+}
+
+.bg-gray-900 {
+  background-color: #111827;
+}
+
+.text-gray-300 {
+  color: #D1D5DB;
+}
+
+.text-gray-400 {
+  color: #9CA3AF;
+}
+
+/* Boutons avec transitions fluides */
+.bg-indigo-600 {
+  background-color: #4F46E5;
+}
+
+.hover\:bg-indigo-700:hover {
+  background-color: #4338CA;
+}
+
+/* Transition des éléments interactifs */
+.transition-transform {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Animation au survol */
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+}
+
+.hover\:scale-125:hover {
+  transform: scale(1.25);
+}
+
+@keyframes shine {
+    0% {
+      background-position: -100%;
+    }
+    100% {
+      background-position: 200%;
+    }
+  }
+  
+  .shiny-title {
+    background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.8), rgba(255,255,255,0.1));
+    background-size: 200%;
+    color: #fff;
+    animation: shine 3s infinite;
+    display: inline-block;
+    padding: 0 10px;
+    border-radius: 5px;
+  }
+  
+

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FiHome, FiTool, FiMail } from 'react-icons/fi'; // Importation d'icônes pour le menu
 import PlanUploader from './components/PlanUploader';
 import PlanViewer from './components/PlanViewer';
 import logo from './img/logo.png'; 
@@ -11,25 +12,47 @@ function App() {
   };
 
   return (
-    <div className="text-center bg-gray-800 min-h-screen flex flex-col justify-center items-center text-white font-poppins p-5 animate-fadeIn">
-      {/* Logo en haut à gauche */}
-      <header className="fixed top-0 left-0 p-4">
-        <img
-          src={logo}
-          alt="Logo de l'entreprise"
-          className="w-40 h-auto transition-transform duration-200 ease-in-out hover:scale-110"
-        />
+    <div className="flex flex-col min-h-screen text-center bg-gray-900 text-white font-poppins">
+      {/* Logo et titre stylé en haut */}
+      <header className="fixed top-0 left-0 p-4 w-full bg-gray-800 z-50 flex justify-between items-center shadow-lg">
+        <div className="flex items-center space-x-4">
+          <img
+            src={logo}
+            alt="Logo de l'entreprise"
+            className="w-28 h-auto transition-transform duration-200 ease-in-out hover:scale-110"
+          />
+          {/* Titre stylé avec animation */}
+          <h1 className="text-2xl font-bold text-indigo-400 tracking-wider shiny-title">A&C Process</h1>
+        </div>
+
+        {/* Menu de navigation */}
+        <nav className="space-x-8 text-white flex items-center">
+          <a href="/" className="hover:text-indigo-400 text-sm flex items-center">
+            <FiHome className="mr-1" /> Accueil
+          </a>
+          <a href="/services" className="hover:text-indigo-400 text-sm flex items-center">
+            <FiTool className="mr-1" /> Services
+          </a>
+          <a href="/contact" className="hover:text-indigo-400 text-sm flex items-center">
+            <FiMail className="mr-1" /> Contact
+          </a>
+        </nav>
       </header>
 
       {/* Contenu principal */}
-      <div className="mt-16 flex flex-col items-center">
-        <h1 className="text-4xl font-bold">Reporting</h1>
+      <main className="flex-grow mt-16 flex flex-col items-center justify-center">
+        <h1 className="text-4xl font-bold mb-8 animate-fadeIn">Reporting des plans</h1>
         {!planUrl ? (
           <PlanUploader onUpload={handleUpload} />
         ) : (
           <PlanViewer planUrl={planUrl} />
         )}
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-gray-800 text-gray-400 p-4 text-center w-full shadow-inner">
+        &copy; 2024 A&C Process. Tous droits réservés.
+      </footer>
     </div>
   );
 }
