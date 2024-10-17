@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import FormPopup from './FormPopup';
-import { FiRefreshCw } from 'react-icons/fi'; // Icone pour réinitialiser les points
-import GeneratePDFButton from './GeneratePDFButton'; // Ajout du bouton de génération PDF
+import { FiRefreshCw } from 'react-icons/fi';
+import GeneratePDFButton from './GeneratePDFButton';
 
 const PlanViewer = ({ planUrl }) => {
   const [formVisible, setFormVisible] = useState(false);
@@ -10,15 +10,47 @@ const PlanViewer = ({ planUrl }) => {
   const [editingPoint, setEditingPoint] = useState(null);
   const canvasRef = useRef();  // Référence pour le canvas
 
-  // Gérer le clic sur l'image pour ajouter un nouveau point
+  // Fonction pour vérifier si le clic est sur un point existant
+  const checkIfPointClicked = (x, y) => {
+    for (let i = 0; i < points.length; i++) {
+      const point = points[i];
+      // Vérifier si le clic est à proximité d'un point (10px de marge)
+      if (Math.abs(x - point.x) < 10 && Math.abs(y - point.y) < 10) {
+        console.log(`Point ${i + 1} cliqué`);
+        return i; // Retourne l'index du point
+      }
+    }
+    return -1; // Retourne -1 si aucun point n'est cliqué
+  };
+
+  // Gérer le clic sur l'image pour ajouter ou éditer un point
   const handleClick = (event) => {
-    const rect = canvasRef.current.getBoundingClientRect(); // Utiliser le canvas
+    const rect = canvasRef.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-    setClickPosition({ x, y });
-    setFormVisible(true);
-    setEditingPoint(null); // Désactiver l'édition lors de l'ajout d'un nouveau point
+
+    // Vérifier si un point existant est cliqué
+    const clickedPointIndex = checkIfPointClicked(x, y);
+
+    if (clickedPointIndex !== -1) {
+      // Si un point est cliqué, éditer ce point
+      handlePointClick(clickedPointIndex);
+    } else {
+      // Si aucun point n'est cliqué, créer un nouveau point
+      console.log('Nouveau point ajouté');
+      setClickPosition({ x, y });
+      setFormVisible(true);
+      setEditingPoint(null); // Désactiver l'édition lors de l'ajout d'un nouveau point
+    }
   };
+
+  // Utiliser useCallback pour mémoriser handlePointClick
+  const handlePointClick = useCallback((index) => {
+    console.log(`Modification du point ${index + 1}`);
+    setClickPosition({ x: points[index].x, y: points[index].y });
+    setFormVisible(true);
+    setEditingPoint(index); // Activer le mode édition lors du clic sur un point existant
+  }, [points]);
 
   // Dessiner le plan et les points sur le canvas après son rendu
   useEffect(() => {
@@ -37,7 +69,7 @@ const PlanViewer = ({ planUrl }) => {
       ctx.drawImage(img, 0, 0); // Dessiner l'image du plan sur le canvas
   
       // Dessiner les points sur le canvas
-      points.forEach(point => {
+      points.forEach((point) => {
         ctx.beginPath();
         ctx.arc(point.x, point.y, 10, 0, 2 * Math.PI); // Cercle pour le point
         ctx.fillStyle = getColorFromSeverity(point.data.severity);
@@ -48,7 +80,7 @@ const PlanViewer = ({ planUrl }) => {
         ctx.closePath();
       });
     };
-  }, [points, planUrl]);// Redessiner à chaque changement des points ou de l'image
+  }, [points, planUrl]);
 
   // Soumission des données du formulaire de point
   const handleFormSubmit = (data) => {
@@ -69,13 +101,6 @@ const PlanViewer = ({ planUrl }) => {
       setPoints(updatedPoints);
       setFormVisible(false);
     }
-  };
-
-  // Gestion du clic sur un point pour l'éditer
-  const handlePointClick = (index) => {
-    setClickPosition({ x: points[index].x, y: points[index].y });
-    setFormVisible(true);
-    setEditingPoint(index); // Activer le mode édition lors du clic sur un point existant
   };
 
   // Réinitialisation des points
@@ -115,7 +140,7 @@ const PlanViewer = ({ planUrl }) => {
       <div className="relative w-full max-w-4xl">
         <canvas
           ref={canvasRef}  // Utilisation du canvas
-          onClick={handleClick}
+          onClick={handleClick} // Gestion des clics sur le canvas
           className="w-auto h-auto max-w-full rounded-lg cursor-crosshair shadow-xl"
           style={{ objectFit: 'contain' }}  // Contenir l'image sans distorsion
         />

@@ -17,23 +17,13 @@ const GeneratePDFButton = ({ points, canvasRef }) => {
       return;
     }
 
-    // Transformer les données en phrases
+    // Traiter chaque point et ajouter les informations au PDF
     points.forEach((point, index) => {
-      const severityText = getSeverityDescription(point.data.severity);
-      const responseText = point.data.response ? `Les étapes de reconstruction effectuées sont : ${point.data.response}.` : 'Aucune étape de reconstruction spécifiée.';
-      const materialsText = point.data.materials ? `Les matériaux utilisés comprennent : ${point.data.materials}.` : 'Aucun matériau précisé.';
-      const practicesText = point.data.practices ? `Les bonnes pratiques observées sont : ${point.data.practices}.` : 'Aucune bonne pratique observée.';
-      const anomaliesText = point.data.anomalies ? `Les anomalies notées sont : ${point.data.anomalies}.` : 'Aucune anomalie n\'a été signalée.';
-      const maintenanceText = point.data.maintenance ? `Le plan de maintenance proposé est : ${point.data.maintenance}.` : 'Aucun plan de maintenance spécifié.';
-
       doc.text(`Point ${index + 1}`, 10, yPosition);
-      doc.text(severityText, 10, yPosition + 10);
-      doc.text(responseText, 10, yPosition + 20);
-      doc.text(materialsText, 10, yPosition + 30);
-      doc.text(practicesText, 10, yPosition + 40);
-      doc.text(anomaliesText, 10, yPosition + 50);
-      doc.text(maintenanceText, 10, yPosition + 60);
-      yPosition += 70;
+      doc.text(`Gravité : ${point.data.severity}`, 10, yPosition + 10);
+      doc.text(`Étapes de reconstruction : ${point.data.response}`, 10, yPosition + 20);
+      doc.text(`Matériaux : ${point.data.materials}`, 10, yPosition + 30);
+      yPosition += 40;
 
       // Si la hauteur dépasse la page, ajouter une nouvelle page
       if (yPosition > 280) {
@@ -43,22 +33,6 @@ const GeneratePDFButton = ({ points, canvasRef }) => {
     });
 
     doc.save('Rapport_Supervision.pdf');
-  };
-
-  // Fonction pour obtenir une description de la gravité
-  const getSeverityDescription = (severity) => {
-    switch (severity) {
-      case 'red':
-        return 'Gravité : Non-conformité majeure.';
-      case 'orange':
-        return 'Gravité : Non-conformité mineure.';
-      case 'lightgreen':
-        return 'Gravité : Améliorable.';
-      case 'green':
-        return 'Gravité : Conforme.';
-      default:
-        return 'Gravité non spécifiée.';
-    }
   };
 
   return (
