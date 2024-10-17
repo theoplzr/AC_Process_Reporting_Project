@@ -57,12 +57,19 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData }) => {
   const handleDeletePhoto = (index) => {
     const newPhotos = [...photos];
     const newPreviews = [...previews];
-
     newPhotos.splice(index, 1);
     newPreviews.splice(index, 1);
-
     setPhotos(newPhotos);
     setPreviews(newPreviews);
+  };
+
+  const handleCloseForm = () => {
+    if (!response || !materials || !practices || !anomalies || !maintenance) {
+      setError('Tous les champs sont obligatoires.');
+      return;
+    }
+    onSubmit({ response, materials, practices, anomalies, maintenance, severity, photos });
+    onClose();
   };
 
   const handleSubmit = (event) => {
@@ -87,17 +94,18 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData }) => {
       }}
       className="bg-white rounded-xl shadow-lg border border-gray-200 w-full animate-fadeIn"
     >
+      {/* En-tête du formulaire */}
       <div className="flex justify-between items-center bg-gray-100 p-4 rounded-t-xl">
         <h2 className="text-lg font-bold text-gray-700 tracking-wider">Supervision</h2>
         <button
-          onClick={handleForceCloseForm} 
+          onClick={handleCloseForm}
           className="text-gray-500 hover:text-gray-700 transition-colors hover:animate-pulse"
         >
           <FiXCircle size={24} />
         </button>
       </div>
 
-      {/* Form Content */}
+      {/* Contenu du formulaire */}
       <div ref={formRef} className="overflow-auto p-6" style={{ maxHeight: '80vh' }}>
         {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
         <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
@@ -153,7 +161,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData }) => {
             />
           </div>
 
-          {/* Severity Color Selector */}
+          {/* Sélecteur de gravité avec code couleur */}
           <div>
             <label className="font-semibold text-gray-700 tracking-wider">Gravité de la supervision :</label>
             <div className="flex items-center space-x-2">
@@ -185,7 +193,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData }) => {
             />
           </div>
 
-          {/* Photo Previews */}
+          {/* Previews des photos */}
           {previews.length > 0 && (
             <div className="mt-4 grid grid-cols-2 gap-4">
               {previews.map((preview, index) => (

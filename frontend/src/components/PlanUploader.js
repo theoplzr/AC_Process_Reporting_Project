@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { FiUploadCloud, FiCheckCircle, FiAlertCircle, FiRefreshCw } from 'react-icons/fi';
 
 const PlanUploader = ({ onUpload }) => {
-  // États pour la gestion des fichiers et du statut de téléchargement
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -10,25 +9,20 @@ const PlanUploader = ({ onUpload }) => {
   const [preview, setPreview] = useState(null); 
   const [orientation, setOrientation] = useState(null); 
 
-  // Gestion de la sélection d'un fichier
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (!file) {
       setUploadError('Aucun fichier sélectionné.');
       return;
     }
-
-    // Limite de taille du fichier (5 Mo)
     if (file.size > 5 * 1024 * 1024) { 
       setUploadError('Le fichier est trop volumineux. La taille maximale est de 5 Mo.');
       return;
     }
-
     setSelectedFile(file);
     setUploadSuccess(false);
     setUploadError('');
 
-    // Création de l'aperçu du fichier sélectionné
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
@@ -42,7 +36,6 @@ const PlanUploader = ({ onUpload }) => {
     reader.readAsDataURL(file);
   };
 
-  // Envoi du fichier sélectionné au serveur
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!selectedFile) {
@@ -74,7 +67,6 @@ const PlanUploader = ({ onUpload }) => {
     }
   };
 
-  // Réinitialisation de l'état de l'upload
   const resetUpload = () => {
     setSelectedFile(null); 
     setPreview(null); 
@@ -116,7 +108,6 @@ const PlanUploader = ({ onUpload }) => {
               className={`w-full h-auto rounded-lg shadow ${orientation === 'landscape' ? 'max-h-[75vh]' : 'max-h-[75vh]'}`}
               style={{ objectFit: 'contain' }}
             />
-
             <button
               type="button"
               onClick={resetUpload}
