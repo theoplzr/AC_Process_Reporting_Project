@@ -1,22 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import FormPopup from './FormPopup';
 import { FiRefreshCw } from 'react-icons/fi'; // Icone pour réinitialiser les points
+import GeneratePDFButton from './GeneratePDFButton'; // Ajout du bouton de génération PDF
 
 const PlanViewer = ({ planUrl }) => {
   const [formVisible, setFormVisible] = useState(false);
   const [clickPosition, setClickPosition] = useState(null);
   const [points, setPoints] = useState([]);
   const [editingPoint, setEditingPoint] = useState(null);
+  const canvasRef = useRef();  // Référence pour le canvas
 
   // Gérer le clic sur l'image pour ajouter un nouveau point
   const handleClick = (event) => {
-    const rect = event.target.getBoundingClientRect();
+    const rect = canvasRef.current.getBoundingClientRect(); // Utiliser le canvas
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     setClickPosition({ x, y });
     setFormVisible(true);
     setEditingPoint(null); // Désactiver l'édition lors de l'ajout d'un nouveau point
   };
+
+  // Dessiner le plan et les points sur le canvas après son rendu
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+  
+    // Activer CORS pour l'image
+    img.crossOrigin = "anonymous";
+  
+    img.src = `http://localhost:3307/${planUrl}`;
+    img.onload = () => {
+      // Redimensionner le canvas en fonction de l'image
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0); // Dessiner l'image du plan sur le canvas
+  
+      // Dessiner les points sur le canvas
+      points.forEach(point => {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 10, 0, 2 * Math.PI); // Cercle pour le point
+        ctx.fillStyle = getColorFromSeverity(point.data.severity);
+        ctx.fill();
+        ctx.fillStyle = 'white';
+        ctx.font = '14px Arial';
+        ctx.fillText(point.index, point.x - 5, point.y + 5); // Numéro du point
+        ctx.closePath();
+      });
+    };
+  }, [points, planUrl]);// Redessiner à chaque changement des points ou de l'image
 
   // Soumission des données du formulaire de point
   const handleFormSubmit = (data) => {
@@ -55,15 +87,15 @@ const PlanViewer = ({ planUrl }) => {
   const getColorFromSeverity = (severity) => {
     switch (severity) {
       case 'red':
-        return 'bg-red-600';
+        return 'red';
       case 'orange':
-        return 'bg-orange-500';
+        return 'orange';
       case 'lightgreen':
-        return 'bg-green-300';
+        return 'lightgreen';
       case 'green':
-        return 'bg-green-600';
+        return 'green';
       default:
-        return 'bg-gray-400';
+        return 'gray';
     }
   };
 
@@ -79,25 +111,14 @@ const PlanViewer = ({ planUrl }) => {
         </button>
       </div>
 
-      {/* Conteneur d'image */}
+      {/* Canvas */}
       <div className="relative w-full max-w-4xl">
-        <img
-          src={`http://localhost:3307/${planUrl}`}  // L'URL de l'image téléchargée
-          alt="Plan"
+        <canvas
+          ref={canvasRef}  // Utilisation du canvas
           onClick={handleClick}
           className="w-auto h-auto max-w-full rounded-lg cursor-crosshair shadow-xl"
           style={{ objectFit: 'contain' }}  // Contenir l'image sans distorsion
         />
-        {points.map((point, index) => (
-          <div
-            key={index}
-            className={`absolute rounded-full w-8 h-8 flex items-center justify-center text-white font-bold shadow-lg cursor-pointer transition-transform duration-300 hover:scale-125 ${getColorFromSeverity(point.data.severity)}`}
-            style={{ left: `${point.x}px`, top: `${point.y}px` }}
-            onClick={() => handlePointClick(index)}
-          >
-            {point.index} {/* Afficher le numéro du point */}
-          </div>
-        ))}
         {formVisible && (
           <div className="transition-opacity duration-300 opacity-100">
             <FormPopup
@@ -109,6 +130,9 @@ const PlanViewer = ({ planUrl }) => {
             />
           </div>
         )}
+
+        {/* Bouton pour générer le rapport PDF */}
+        <GeneratePDFButton points={points} canvasRef={canvasRef} />
       </div>
 
       {/* Message d'information si aucun point n'est ajouté */}

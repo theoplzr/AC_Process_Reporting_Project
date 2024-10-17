@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { FiHome, FiTool, FiMail } from 'react-icons/fi'; // Importation d'icônes pour le menu
 import PlanUploader from './components/PlanUploader';
 import PlanViewer from './components/PlanViewer';
-import logo from './img/logo.png'; 
+import logo from './img/logo.png';
 
 function App() {
   const [planUrl, setPlanUrl] = useState(null);
@@ -24,19 +23,6 @@ function App() {
           {/* Titre stylé avec animation */}
           <h1 className="text-2xl font-bold text-indigo-400 tracking-wider shiny-title">A&C Process</h1>
         </div>
-
-        {/* Menu de navigation */}
-        <nav className="space-x-8 text-white flex items-center">
-          <a href="/" className="hover:text-indigo-400 text-sm flex items-center">
-            <FiHome className="mr-1" /> Accueil
-          </a>
-          <a href="/services" className="hover:text-indigo-400 text-sm flex items-center">
-            <FiTool className="mr-1" /> Services
-          </a>
-          <a href="/contact" className="hover:text-indigo-400 text-sm flex items-center">
-            <FiMail className="mr-1" /> Contact
-          </a>
-        </nav>
       </header>
 
       {/* Contenu principal */}

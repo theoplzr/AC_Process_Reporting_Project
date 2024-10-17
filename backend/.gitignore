@@ -44,6 +44,3 @@ Thumbs.db
 # IDE-specific settings
 .vscode/
 .idea/
-
-# Environment variables
-.env.local

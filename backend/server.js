@@ -9,6 +9,17 @@ const app = express();  // Créer une application Express
 const planRoutes = require('./routes/planRoutes');  // Importer les routes pour "Plan"
 const port = process.env.PORT || 3307;  // Définir le port d'écoute de l'application, utiliser celui dans l'environnement ou 3307 par défaut
 
+// Middleware pour ajouter les en-têtes CORS personnalisés
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*"); // Permettre toutes les origines
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"); // Méthodes HTTP autorisées
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();  // Répondre directement aux requêtes preflight CORS
+  }
+  next();
+});
+
 // Utiliser CORS pour autoriser toutes les origines (accès aux ressources depuis n'importe quelle origine)
 app.use(cors());  // Middleware CORS
 
@@ -33,4 +44,4 @@ app.listen(port, () => {
 });
 
 // Servir les fichiers statiques depuis le répertoire "uploads"
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', cors(), express.static('uploads'));
