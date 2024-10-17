@@ -65,12 +65,6 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData }) => {
     setPreviews(newPreviews);
   };
 
-  // Fonction pour fermer sans validation (via la croix)
-  const handleCloseForm = () => {
-    onClose();  // Fermeture sans validation
-  };
-
-  // Fonction pour la soumission avec validation des champs
   const handleSubmit = (event) => {
     event.preventDefault();
     if (!response || !materials || !practices || !anomalies || !maintenance) {
@@ -96,7 +90,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData }) => {
       <div className="flex justify-between items-center bg-gray-100 p-4 rounded-t-xl">
         <h2 className="text-lg font-bold text-gray-700 tracking-wider">Supervision</h2>
         <button
-          onClick={handleCloseForm}
+          onClick={handleForceCloseForm} 
           className="text-gray-500 hover:text-gray-700 transition-colors hover:animate-pulse"
         >
           <FiXCircle size={24} />
