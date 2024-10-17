@@ -65,15 +65,12 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData }) => {
     setPreviews(newPreviews);
   };
 
+  // Fonction pour fermer sans validation (via la croix)
   const handleCloseForm = () => {
-    if (!response || !materials || !practices || !anomalies || !maintenance) {
-      setError('Tous les champs sont obligatoires.');
-      return;
-    }
-    onSubmit({ response, materials, practices, anomalies, maintenance, severity, photos });
-    onClose();
+    onClose();  // Fermeture sans validation
   };
 
+  // Fonction pour la soumission avec validation des champs
   const handleSubmit = (event) => {
     event.preventDefault();
     if (!response || !materials || !practices || !anomalies || !maintenance) {
