@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import FormPopup from './FormPopup';
-import { FiRefreshCw } from 'react-icons/fi'; // Icone pour réinitialiser les points
+import { FiRefreshCw } from 'react-icons/fi'; // Icône pour réinitialiser les points
 
-const PlanViewer = ({ planUrl }) => {
+const PlanViewer = ({ planUrl, mode }) => {
   const [formVisible, setFormVisible] = useState(false);
   const [clickPosition, setClickPosition] = useState(null);
   const [points, setPoints] = useState([]);
@@ -29,6 +29,7 @@ const PlanViewer = ({ planUrl }) => {
     setPoints(updatedPoints);
     setFormVisible(false);
   };
+
   // Suppression d'un point
   const handleDeletePoint = () => {
     if (editingPoint !== null) {
@@ -44,10 +45,12 @@ const PlanViewer = ({ planUrl }) => {
     setFormVisible(true);
     setEditingPoint(index); // Activer le mode édition lors du clic sur un point existant
   };
+
   // Réinitialisation des points
   const resetPoints = () => {
     setPoints([]); // Réinitialiser tous les points
   };
+
   // Définir la couleur du point selon la gravité
   const getColorFromSeverity = (severity) => {
     switch (severity) {
@@ -55,8 +58,8 @@ const PlanViewer = ({ planUrl }) => {
         return 'bg-red-600';
       case 'orange':
         return 'bg-orange-500';
-      case 'lightgreen':
-        return 'bg-green-300';
+      case 'yellow':
+        return 'bg-yellow-400';
       case 'green':
         return 'bg-green-600';
       default:
@@ -75,6 +78,7 @@ const PlanViewer = ({ planUrl }) => {
           <FiRefreshCw className="mr-2" /> Réinitialiser les points
         </button>
       </div>
+
       {/* Conteneur d'image */}
       <div className="relative w-full max-w-4xl">
         <img
@@ -94,6 +98,7 @@ const PlanViewer = ({ planUrl }) => {
             {point.index} {/* Afficher le numéro du point */}
           </div>
         ))}
+
         {formVisible && (
           <div className="transition-opacity duration-300 opacity-100">
             <FormPopup
@@ -102,10 +107,12 @@ const PlanViewer = ({ planUrl }) => {
               onDelete={handleDeletePoint}
               onClose={() => setFormVisible(false)}
               existingData={editingPoint !== null ? points[editingPoint].data : null}
+              mode={mode}  // Passer le mode sélectionné pour afficher le bon formulaire
             />
           </div>
         )}
       </div>
+
       {/* Message d'information si aucun point n'est ajouté */}
       {!points.length && (
         <p className="text-white text-sm mt-4 animate-pulse">
@@ -117,5 +124,3 @@ const PlanViewer = ({ planUrl }) => {
 };
 
 export default PlanViewer;
-  
-  
