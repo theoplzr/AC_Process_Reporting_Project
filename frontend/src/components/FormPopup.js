@@ -5,8 +5,8 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
   // Champs partagés
   const [zoneName, setZoneName] = useState('');
   const [severity, setSeverity] = useState('green');
-  const [photos, setPhotos] = useState([]);
-  const [previews, setPreviews] = useState([]);
+  const [photos, setPhotos] = useState([]); // Store image files
+  const [previews, setPreviews] = useState([]); // Store image preview URLs
   const [photoDescriptions, setPhotoDescriptions] = useState([]);
 
   // Champs Supervision
@@ -18,7 +18,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
   const [reserve, setReserve] = useState('');
 
   // Champs Expertise
-  const [expertiseMaterials, setExpertiseMaterials] = useState([{ material: '', thickness: '' }]); // Matériaux pour Expertise
+  const [expertiseMaterials, setExpertiseMaterials] = useState([{ material: '', thickness: '' }]);
   const [age, setAge] = useState('');
   const [damageNature, setDamageNature] = useState('');
   const [damageDescription, setDamageDescription] = useState('');
@@ -27,11 +27,13 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
   const [immediateRecommendations, setImmediateRecommendations] = useState('');
   const [longTermRecommendations, setLongTermRecommendations] = useState('');
 
+  // Load existing data (if any)
   useEffect(() => {
     if (existingData) {
       setZoneName(existingData.zoneName || '');
       setSeverity(existingData.severity || 'green');
       setPhotos(existingData.photos || []);
+      setPreviews(existingData.photos ? existingData.photos.map(photo => URL.createObjectURL(photo)) : []); // Create previews for existing photos
       setPhotoDescriptions(existingData.photoDescriptions || []);
 
       // Champs Supervision
@@ -54,28 +56,33 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
     }
   }, [existingData]);
 
-  // Gestion des photos
+  // Handle adding new photos and generating previews
   const handlePhotoChange = (event) => {
-    const files = Array.from(event.target.files);
-    const newPhotos = [...photos, ...files];
+    const files = Array.from(event.target.files); // Convert FileList to array
+    const newPhotos = [...photos, ...files]; // Add new files to the state
     setPhotos(newPhotos);
 
-    const newPreviews = files.map((file) => URL.createObjectURL(file));
-    setPreviews((prevPreviews) => [...prevPreviews, ...newPreviews]);
+    const newPreviews = files.map((file) => URL.createObjectURL(file)); // Generate new previews for the files
+    setPreviews((prevPreviews) => [...prevPreviews, ...newPreviews]); // Add new previews to existing ones
   };
 
+  // Handle deleting a photo
   const handleDeletePhoto = (index) => {
     const newPhotos = [...photos];
     const newPreviews = [...previews];
     const newDescriptions = [...photoDescriptions];
+    
+    // Remove the specific photo and preview
     newPhotos.splice(index, 1);
     newPreviews.splice(index, 1);
     newDescriptions.splice(index, 1);
+
     setPhotos(newPhotos);
     setPreviews(newPreviews);
     setPhotoDescriptions(newDescriptions);
   };
 
+  // Handle description change for a photo
   const handleDescriptionChange = (index, value) => {
     const newDescriptions = [...photoDescriptions];
     newDescriptions[index] = value;
@@ -421,7 +428,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
               className="mt-2 p-3 border border-gray-300 rounded-lg w-full text-gray-800"
             >
               <option value="green">Conforme (Vert)</option>
-              <option value="yellow">Améliorable (Jaune)</option> {/* Vrai jaune */}
+              <option value="yellow">Améliorable (Jaune)</option>
               <option value="orange">Non-conformité mineure (Orange)</option>
               <option value="red">Non-conformité majeure (Rouge)</option>
             </select>
