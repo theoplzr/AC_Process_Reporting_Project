@@ -14,6 +14,8 @@ const PlanViewer = ({ planUrl, mode }) => {
   const [editingPoint, setEditingPoint] = useState(null);
   const [hasMoved, setHasMoved] = useState(false);
 
+  
+
   const imgRef = useRef(null);
 
   // Start drawing a rectangle on mouse down
