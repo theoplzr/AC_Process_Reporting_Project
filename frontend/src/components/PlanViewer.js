@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import FormPopup from './FormPopup';
 import { FiRefreshCw } from 'react-icons/fi';
 
@@ -7,20 +7,56 @@ const PlanViewer = ({ planUrl, mode }) => {
   const [clickPosition, setClickPosition] = useState(null);
   const [points, setPoints] = useState([]);
   const [editingPoint, setEditingPoint] = useState(null);
+  const [rectangles, setRectangles] = useState([]);
+  const [currentRect, setCurrentRect] = useState(null);
+  const [isDrawing, setIsDrawing] = useState(false);
 
-  // Handle clicking on image to add a new point
-  const handleClick = (event) => {
-    const rect = event.target.getBoundingClientRect();
+  const imgRef = useRef(null);
+
+  // Handle clicking on image to start drawing a rectangle
+  const handleMouseDown = (event) => {
+    const rect = imgRef.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-    setClickPosition({ x, y });
-    setFormVisible(true);
-    setEditingPoint(null);
+
+    setCurrentRect({ x, y, width: 0, height: 0 });
+    setIsDrawing(true);
+  };
+
+  // Handle dragging to define the rectangle size
+  const handleMouseMove = (event) => {
+    if (!isDrawing) return;
+
+    const rect = imgRef.current.getBoundingClientRect();
+    const width = event.clientX - rect.left - currentRect.x;
+    const height = event.clientY - rect.top - currentRect.y;
+
+    setCurrentRect((prevRect) => ({
+      ...prevRect,
+      width: Math.abs(width),
+      height: Math.abs(height),
+    }));
+  };
+
+  // Finish drawing the rectangle
+  const handleMouseUp = () => {
+    if (isDrawing) {
+      setRectangles((prevRectangles) => [...prevRectangles, currentRect]);
+      setIsDrawing(false);
+
+      // Calculer le centre du rectangle
+      const centerX = currentRect.x + currentRect.width / 2;
+      const centerY = currentRect.y + currentRect.height / 2;
+
+      setClickPosition({ x: centerX, y: centerY });
+      setFormVisible(true); // Show form after finishing drawing
+      setEditingPoint(null);
+    }
   };
 
   // Handle form submission for the point data
   const handleFormSubmit = (data) => {
-    const updatedPoints = editingPoint !== null 
+    const updatedPoints = editingPoint !== null
       ? points.map((point, index) =>
           index === editingPoint ? { ...point, data } : point
         )
@@ -49,6 +85,7 @@ const PlanViewer = ({ planUrl, mode }) => {
   // Reset all points
   const resetPoints = () => {
     setPoints([]);
+    setRectangles([]);
   };
 
   // Define color of points based on severity
@@ -68,7 +105,11 @@ const PlanViewer = ({ planUrl, mode }) => {
   };
 
   return (
-    <div className="flex flex-col items-center bg-gray-900 min-h-screen p-6">
+    <div
+      className="flex flex-col items-center bg-gray-900 min-h-screen p-6"
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+    >
       {/* Button to reset all points */}
       <div className="flex justify-end w-full max-w-4xl">
         <button
@@ -82,41 +123,82 @@ const PlanViewer = ({ planUrl, mode }) => {
       {/* Image container */}
       <div className="relative w-full max-w-4xl">
         <img
-          src={`http://localhost:3307/${planUrl}`}  // URL of the uploaded plan
+          src={`http://localhost:3307/${planUrl}`} // URL of the uploaded plan
           alt="Plan"
-          onClick={handleClick}
           className="w-full h-auto rounded-lg cursor-crosshair shadow-xl"
+          ref={imgRef}
+          onMouseDown={handleMouseDown}
         />
+
+        {/* Display rectangles */}
+        {rectangles &&
+          rectangles.length > 0 &&
+          rectangles.map(
+            (rect, index) =>
+              rect &&
+              rect.x !== null &&
+              rect.y !== null &&
+              rect.width !== null &&
+              rect.height !== null && (
+                <div
+                  key={index}
+                  className="absolute border-2 border-blue-500 bg-blue-300 bg-opacity-30"
+                  style={{
+                    left: `${rect.x}px`,
+                    top: `${rect.y}px`,
+                    width: `${rect.width}px`,
+                    height: `${rect.height}px`,
+                  }}
+                />
+              )
+          )}
+
+        {/* Display points */}
         {points.map((point, index) => (
           <div
             key={index}
-            className={`absolute rounded-full w-8 h-8 flex items-center justify-center text-white font-bold shadow-lg cursor-pointer transition-transform duration-300 hover:scale-125 ${getColorFromSeverity(point.data.severity)}`}
-            style={{ left: `${point.x}px`, top: `${point.y}px` }}
+            className={`absolute rounded-full w-8 h-8 flex items-center justify-center text-white font-bold shadow-lg cursor-pointer transition-transform duration-300 hover:scale-125 ${getColorFromSeverity(
+              point.data.severity
+            )}`}
+            style={{ left: `${point.x - 16}px`, top: `${point.y - 16}px` }}
             onClick={() => handlePointClick(index)}
           >
             {point.index} {/* Display the point number */}
           </div>
         ))}
 
-        {formVisible && (
-          <div className="transition-opacity duration-300 opacity-100">
-            <FormPopup
-              position={clickPosition}
-              onSubmit={handleFormSubmit}
-              onDelete={handleDeletePoint}
-              onClose={() => setFormVisible(false)}
-              existingData={editingPoint !== null ? points[editingPoint].data : null}
-              mode={mode}  // Pass the selected mode to show the correct form
-            />
-          </div>
+        {/* Display current rectangle while drawing */}
+        {currentRect && (
+          <div
+            className="absolute border-2 border-blue-500 bg-blue-300 bg-opacity-30"
+            style={{
+              left: `${currentRect.x}px`,
+              top: `${currentRect.y}px`,
+              width: `${currentRect.width}px`,
+              height: `${currentRect.height}px`,
+            }}
+          />
         )}
       </div>
 
       {/* Display message if no points are added */}
       {!points.length && (
         <p className="text-white text-sm mt-4 animate-pulse">
-          Cliquez sur l'image pour ajouter un point.
+          Cliquez sur l'image pour ajouter un point ou tracer une zone.
         </p>
+      )}
+
+      {formVisible && (
+        <div className="transition-opacity duration-300 opacity-100">
+          <FormPopup
+            position={clickPosition}
+            onSubmit={handleFormSubmit}
+            onDelete={handleDeletePoint}
+            onClose={() => setFormVisible(false)}
+            existingData={editingPoint !== null ? points[editingPoint].data : null}
+            mode={mode} // Pass the selected mode to show the correct form
+          />
+        </div>
       )}
     </div>
   );
