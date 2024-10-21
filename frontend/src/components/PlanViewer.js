@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import FormPopup from './FormPopup';
-import { FiRefreshCw } from 'react-icons/fi';
+import { FiRefreshCw } from 'react-icons/fi'; // Icon for resetting points
+import jsPDF from 'jspdf';
+import 'jspdf-autotable'; // Plugin for structured table in PDF
 
 const PlanViewer = ({ planUrl, mode }) => {
   const [formVisible, setFormVisible] = useState(false);
@@ -67,12 +69,7 @@ const PlanViewer = ({ planUrl, mode }) => {
     }
   };
 
-  // Prevent the default drag behavior for the image
-  const preventDefaultDrag = (event) => {
-    event.preventDefault();
-  };
-
-  // Handle form submission for the point data
+  // Gérer la soumission du formulaire pour les données du point
   const handleFormSubmit = (data) => {
     const updatedPoints = editingPoint !== null
       ? points.map((point, index) =>
@@ -85,7 +82,7 @@ const PlanViewer = ({ planUrl, mode }) => {
     setCurrentRect(null); // Exit drawing mode after form submission
   };
 
-  // Handle deleting a point and its associated rectangle
+  // Gérer la suppression d'un point
   const handleDeletePoint = () => {
     if (editingPoint !== null) {
       const updatedPoints = points.filter((_, index) => index !== editingPoint);
@@ -97,7 +94,7 @@ const PlanViewer = ({ planUrl, mode }) => {
     }
   };
 
-  // Handle clicking on a point to edit it
+  // Gérer le clic sur un point pour l'éditer
   const handlePointClick = (index) => {
     const point = points[index];
     setClickPosition({ x: point.x, y: point.y });
@@ -105,13 +102,13 @@ const PlanViewer = ({ planUrl, mode }) => {
     setFormVisible(true); // Open the form to edit the point
   };
 
-  // Reset all points and zones
+  // Réinitialiser tous les points
   const resetPoints = () => {
     setPoints([]); // Reset points
     setRectangles([]); // Reset rectangles
   };
 
-  // Define color of points based on severity
+  // Définir la couleur des points en fonction de la gravité
   const getColorFromSeverity = (severity) => {
     switch (severity) {
       case 'red':
@@ -143,7 +140,7 @@ const PlanViewer = ({ planUrl, mode }) => {
         </button>
       </div>
 
-      {/* Image container */}
+      {/* Conteneur d'image */}
       <div className="relative w-full max-w-4xl">
         <img
           src={`http://localhost:3307/${planUrl}`} // URL of the uploaded plan
@@ -188,7 +185,7 @@ const PlanViewer = ({ planUrl, mode }) => {
             style={{ left: `${point.x - 16}px`, top: `${point.y - 16}px`, zIndex: 10 }} // Higher z-index for points
             onClick={() => handlePointClick(index)}
           >
-            {point.index} {/* Display the point number */}
+            {point.index} {/* Affiche le numéro du point */}
           </div>
         ))}
 
@@ -207,7 +204,7 @@ const PlanViewer = ({ planUrl, mode }) => {
         )}
       </div>
 
-      {/* Display message if no points are added */}
+      {/* Message si aucun point n'est ajouté */}
       {!points.length && (
         <p className="text-white text-sm mt-4 animate-pulse">
           Cliquez sur l'image pour ajouter un point ou tracer une zone.
