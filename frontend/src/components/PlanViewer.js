@@ -9,7 +9,10 @@ const PlanViewer = ({ planUrl, mode }) => {
   const [rectangles, setRectangles] = useState([]);
   const [currentRect, setCurrentRect] = useState(null);
   const [isDrawing, setIsDrawing] = useState(false); // For tracking when the user is drawing
+  const [isDragging, setIsDragging] = useState(false); // For tracking drag state of points
+  const [draggingPointIndex, setDraggingPointIndex] = useState(null); // Index of the point being dragged
   const [editingPoint, setEditingPoint] = useState(null);
+  const [hasMoved, setHasMoved] = useState(false); // Track if a point has been moved
 
   const imgRef = useRef(null);
 
@@ -26,23 +29,49 @@ const PlanViewer = ({ planUrl, mode }) => {
 
   // Update rectangle size on mouse move
   const handleMouseMove = (event) => {
-    if (!isDrawing) return; // Only draw when mouse is down
+    if (isDrawing) {
+      const rect = imgRef.current.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
 
-    const rect = imgRef.current.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+      const newWidth = x - currentRect.x;
+      const newHeight = y - currentRect.y;
 
-    const newWidth = x - currentRect.x;
-    const newHeight = y - currentRect.y;
+      setCurrentRect((prevRect) => ({
+        ...prevRect,
+        width: newWidth,
+        height: newHeight,
+      }));
+    } else if (isDragging && draggingPointIndex !== null) {
+      // If dragging a point, update its position
+      const rect = imgRef.current.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
 
-    setCurrentRect((prevRect) => ({
-      ...prevRect,
-      width: newWidth,
-      height: newHeight,
-    }));
+      setPoints((prevPoints) =>
+        prevPoints.map((point, index) =>
+          index === draggingPointIndex ? { ...point, x, y } : point
+        )
+      );
+
+      // Update the rectangle associated with the dragged point
+      setRectangles((prevRectangles) =>
+        prevRectangles.map((rect, index) =>
+          index === draggingPointIndex
+            ? {
+                ...rect,
+                x: x - rect.width / 2,
+                y: y - rect.height / 2,
+              }
+            : rect
+        )
+      );
+
+      setHasMoved(true); // Mark that the point has been moved
+    }
   };
 
-  // Finish drawing on mouse up
+  // Finish drawing or dragging on mouse up
   const handleMouseUp = () => {
     if (isDrawing) {
       // Ensure proper coordinates and size of the rectangle
@@ -64,6 +93,28 @@ const PlanViewer = ({ planUrl, mode }) => {
       setClickPosition({ x: centerX, y: centerY });
       setFormVisible(true);
       setEditingPoint(null); // This is a new point, not an edit
+    }
+
+    // Stop dragging
+    setIsDragging(false);
+    setDraggingPointIndex(null);
+  };
+
+  // Start dragging a point
+  const handlePointMouseDown = (index, event) => {
+    setIsDragging(true);
+    setDraggingPointIndex(index);
+    setHasMoved(false); // Reset the movement flag when starting to drag
+    event.stopPropagation(); // Prevent triggering other mouse events
+  };
+
+  // Handle clicking on a point to open form (only if it wasn't moved)
+  const handlePointClick = (index) => {
+    if (!hasMoved) {
+      const point = points[index];
+      setClickPosition({ x: point.x, y: point.y });
+      setEditingPoint(index);
+      setFormVisible(true); // Open the form to edit the point
     }
   };
 
@@ -97,14 +148,6 @@ const PlanViewer = ({ planUrl, mode }) => {
     }
   };
 
-  // Handle clicking on a point to edit it
-  const handlePointClick = (index) => {
-    const point = points[index];
-    setClickPosition({ x: point.x, y: point.y });
-    setEditingPoint(index);
-    setFormVisible(true); // Open the form to edit the point
-  };
-
   // Reset all points and zones
   const resetPoints = () => {
     setPoints([]); // Reset points
@@ -131,7 +174,7 @@ const PlanViewer = ({ planUrl, mode }) => {
     <div
       className="flex flex-col items-center bg-gray-900 min-h-screen p-6"
       onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp} // Finish drawing on mouse up
+      onMouseUp={handleMouseUp} // Finish drawing or dragging on mouse up
     >
       {/* Button to reset all points and zones */}
       <div className="flex justify-end w-full max-w-4xl">
@@ -148,10 +191,11 @@ const PlanViewer = ({ planUrl, mode }) => {
         <img
           src={`http://localhost:3307/${planUrl}`} // URL of the uploaded plan
           alt="Plan"
-          className="w-full h-auto rounded-lg cursor-crosshair shadow-xl"
+          className="rounded-lg cursor-crosshair shadow-xl"
           ref={imgRef}
           onMouseDown={handleMouseDown}
           onDragStart={preventDefaultDrag} // Prevent default drag behavior
+          style={{ width: '100%', height: 'auto', objectFit: 'contain' }} // Keep the image's aspect ratio without resizing
         />
 
         {/* Display rectangles */}
@@ -185,46 +229,34 @@ const PlanViewer = ({ planUrl, mode }) => {
             className={`absolute rounded-full w-8 h-8 flex items-center justify-center text-white font-bold shadow-lg cursor-pointer transition-transform duration-300 hover:scale-125 ${getColorFromSeverity(
               point.data.severity
             )}`}
-            style={{ left: `${point.x - 16}px`, top: `${point.y - 16}px`, zIndex: 10 }} // Higher z-index for points
+            style={{ left: `${point.x - 16}px`, top: `${point.y - 16}px`, zIndex: 2 }} // Place the point on top of the zone
+            onMouseDown={(event) => handlePointMouseDown(index, event)}
             onClick={() => handlePointClick(index)}
           >
             {point.index} {/* Display the point number */}
           </div>
         ))}
 
-        {/* Display current rectangle while drawing */}
-        {currentRect && (
-          <div
-            className="absolute border-2 border-blue-500 bg-blue-300 bg-opacity-30"
-            style={{
-              left: `${currentRect.x}px`,
-              top: `${currentRect.y}px`,
-              width: `${Math.abs(currentRect.width)}px`,
-              height: `${Math.abs(currentRect.height)}px`,
-              zIndex: 1, // Lower z-index for the drawing rectangle
-            }}
-          />
+        {/* Show form popup if formVisible is true */}
+        {formVisible && (
+          <div className="transition-opacity duration-300 opacity-100">
+            <FormPopup
+              position={clickPosition}
+              onSubmit={handleFormSubmit}
+              onDelete={handleDeletePoint}
+              onClose={() => setFormVisible(false)}
+              existingData={editingPoint !== null ? points[editingPoint].data : null}
+              mode={mode} // Pass the selected mode to show the correct form
+            />
+          </div>
         )}
       </div>
 
       {/* Display message if no points are added */}
       {!points.length && (
         <p className="text-white text-sm mt-4 animate-pulse">
-          Cliquez sur l'image pour ajouter un point ou tracer une zone.
+          Cliquez sur l'image pour ajouter une zone.
         </p>
-      )}
-
-      {formVisible && (
-        <div className="transition-opacity duration-300 opacity-100">
-          <FormPopup
-            position={clickPosition}
-            onSubmit={handleFormSubmit}
-            onDelete={handleDeletePoint}
-            onClose={() => setFormVisible(false)}
-            existingData={editingPoint !== null ? points[editingPoint].data : null}
-            mode={mode} // Pass the selected mode to show the correct form
-          />
-        </div>
       )}
     </div>
   );
