@@ -6,52 +6,70 @@ const PlanViewer = ({ planUrl, mode }) => {
   const [formVisible, setFormVisible] = useState(false);
   const [clickPosition, setClickPosition] = useState(null);
   const [points, setPoints] = useState([]);
-  const [editingPoint, setEditingPoint] = useState(null);
   const [rectangles, setRectangles] = useState([]);
   const [currentRect, setCurrentRect] = useState(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false); // For tracking when the user is drawing
+  const [editingPoint, setEditingPoint] = useState(null);
 
   const imgRef = useRef(null);
 
-  // Handle clicking on image to start drawing a rectangle
+  // Start drawing a rectangle on mouse down
   const handleMouseDown = (event) => {
     const rect = imgRef.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
     setCurrentRect({ x, y, width: 0, height: 0 });
-    setIsDrawing(true);
+    setIsDrawing(true); // Start drawing mode
+    setEditingPoint(null); // Start a new zone, not editing an existing point
   };
 
-  // Handle dragging to define the rectangle size
+  // Update rectangle size on mouse move
   const handleMouseMove = (event) => {
-    if (!isDrawing) return;
+    if (!isDrawing) return; // Only draw when mouse is down
 
     const rect = imgRef.current.getBoundingClientRect();
-    const width = event.clientX - rect.left - currentRect.x;
-    const height = event.clientY - rect.top - currentRect.y;
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const newWidth = x - currentRect.x;
+    const newHeight = y - currentRect.y;
 
     setCurrentRect((prevRect) => ({
       ...prevRect,
-      width: Math.abs(width),
-      height: Math.abs(height),
+      width: newWidth,
+      height: newHeight,
     }));
   };
 
-  // Finish drawing the rectangle
+  // Finish drawing on mouse up
   const handleMouseUp = () => {
     if (isDrawing) {
-      setRectangles((prevRectangles) => [...prevRectangles, currentRect]);
-      setIsDrawing(false);
+      // Ensure proper coordinates and size of the rectangle
+      const finalRect = {
+        ...currentRect,
+        x: currentRect.width < 0 ? currentRect.x + currentRect.width : currentRect.x,
+        y: currentRect.height < 0 ? currentRect.y + currentRect.height : currentRect.y,
+        width: Math.abs(currentRect.width),
+        height: Math.abs(currentRect.height),
+      };
 
-      // Calculer le centre du rectangle
-      const centerX = currentRect.x + currentRect.width / 2;
-      const centerY = currentRect.y + currentRect.height / 2;
+      setRectangles((prevRectangles) => [...prevRectangles, finalRect]);
+      setIsDrawing(false); // Stop drawing mode
+
+      // Calculate center of the rectangle for placing the point
+      const centerX = finalRect.x + finalRect.width / 2;
+      const centerY = finalRect.y + finalRect.height / 2;
 
       setClickPosition({ x: centerX, y: centerY });
-      setFormVisible(true); // Show form after finishing drawing
-      setEditingPoint(null);
+      setFormVisible(true);
+      setEditingPoint(null); // This is a new point, not an edit
     }
+  };
+
+  // Prevent the default drag behavior for the image
+  const preventDefaultDrag = (event) => {
+    event.preventDefault();
   };
 
   // Handle form submission for the point data
@@ -64,28 +82,33 @@ const PlanViewer = ({ planUrl, mode }) => {
 
     setPoints(updatedPoints);
     setFormVisible(false);
+    setCurrentRect(null); // Exit drawing mode after form submission
   };
 
-  // Handle deleting a point
+  // Handle deleting a point and its associated rectangle
   const handleDeletePoint = () => {
     if (editingPoint !== null) {
       const updatedPoints = points.filter((_, index) => index !== editingPoint);
+      const updatedRectangles = rectangles.filter((_, index) => index !== editingPoint);
+
       setPoints(updatedPoints);
+      setRectangles(updatedRectangles);
       setFormVisible(false);
     }
   };
 
   // Handle clicking on a point to edit it
   const handlePointClick = (index) => {
-    setClickPosition({ x: points[index].x, y: points[index].y });
-    setFormVisible(true);
+    const point = points[index];
+    setClickPosition({ x: point.x, y: point.y });
     setEditingPoint(index);
+    setFormVisible(true); // Open the form to edit the point
   };
 
-  // Reset all points
+  // Reset all points and zones
   const resetPoints = () => {
-    setPoints([]);
-    setRectangles([]);
+    setPoints([]); // Reset points
+    setRectangles([]); // Reset rectangles
   };
 
   // Define color of points based on severity
@@ -108,15 +131,15 @@ const PlanViewer = ({ planUrl, mode }) => {
     <div
       className="flex flex-col items-center bg-gray-900 min-h-screen p-6"
       onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
+      onMouseUp={handleMouseUp} // Finish drawing on mouse up
     >
-      {/* Button to reset all points */}
+      {/* Button to reset all points and zones */}
       <div className="flex justify-end w-full max-w-4xl">
         <button
           onClick={resetPoints}
           className="flex items-center text-white bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg shadow-md transition transform hover:scale-105 mb-4"
         >
-          <FiRefreshCw className="mr-2" /> Réinitialiser les points
+          <FiRefreshCw className="mr-2" /> Réinitialiser les points et zones
         </button>
       </div>
 
@@ -128,6 +151,7 @@ const PlanViewer = ({ planUrl, mode }) => {
           className="w-full h-auto rounded-lg cursor-crosshair shadow-xl"
           ref={imgRef}
           onMouseDown={handleMouseDown}
+          onDragStart={preventDefaultDrag} // Prevent default drag behavior
         />
 
         {/* Display rectangles */}
@@ -148,6 +172,7 @@ const PlanViewer = ({ planUrl, mode }) => {
                     top: `${rect.y}px`,
                     width: `${rect.width}px`,
                     height: `${rect.height}px`,
+                    zIndex: 1, // Lower z-index for the zone
                   }}
                 />
               )
@@ -160,7 +185,7 @@ const PlanViewer = ({ planUrl, mode }) => {
             className={`absolute rounded-full w-8 h-8 flex items-center justify-center text-white font-bold shadow-lg cursor-pointer transition-transform duration-300 hover:scale-125 ${getColorFromSeverity(
               point.data.severity
             )}`}
-            style={{ left: `${point.x - 16}px`, top: `${point.y - 16}px` }}
+            style={{ left: `${point.x - 16}px`, top: `${point.y - 16}px`, zIndex: 10 }} // Higher z-index for points
             onClick={() => handlePointClick(index)}
           >
             {point.index} {/* Display the point number */}
@@ -174,8 +199,9 @@ const PlanViewer = ({ planUrl, mode }) => {
             style={{
               left: `${currentRect.x}px`,
               top: `${currentRect.y}px`,
-              width: `${currentRect.width}px`,
-              height: `${currentRect.height}px`,
+              width: `${Math.abs(currentRect.width)}px`,
+              height: `${Math.abs(currentRect.height)}px`,
+              zIndex: 1, // Lower z-index for the drawing rectangle
             }}
           />
         )}
