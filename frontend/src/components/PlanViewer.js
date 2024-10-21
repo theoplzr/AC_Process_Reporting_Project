@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import FormPopup from './FormPopup';
 import { FiRefreshCw } from 'react-icons/fi'; // Icon for resetting points
+import jsPDF from 'jspdf';
+import 'jspdf-autotable'; // Plugin for structured table in PDF
 
 const PlanViewer = ({ planUrl, mode }) => {
   const [formVisible, setFormVisible] = useState(false);
@@ -48,7 +50,7 @@ const PlanViewer = ({ planUrl, mode }) => {
 
   // Réinitialiser tous les points
   const resetPoints = () => {
-    setPoints([]); // Réinitialise le tableau des points
+    setPoints([]); // Reset points array
   };
 
   // Définir la couleur des points en fonction de la gravité
@@ -86,7 +88,7 @@ const PlanViewer = ({ planUrl, mode }) => {
           alt="Plan"
           onClick={handleClick}
           className="w-auto h-auto max-w-full rounded-lg cursor-crosshair shadow-xl"
-          style={{ objectFit: 'contain' }}  // Contenir l'image sans distorsion
+          style={{ objectFit: 'contain' }}  // Contain the image without distortion
         />
         {points.map((point, index) => (
           <div
