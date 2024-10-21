@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import PlanUploader from './components/PlanUploader';
 import PlanViewer from './components/PlanViewer';
-import ReportTable from './components/GeneratePDF';
 import logo from './img/logo.png';
 
 function App() {
   const [planUrl, setPlanUrl] = useState(null); // Store the uploaded plan's URL
   const [mode, setMode] = useState(null); // Store selected mode (Supervision or Expertise)
-  const [reportData, setReportData] = useState([]); // Store the data for the report
 
   // Function called after the plan is uploaded
   const handleUpload = (plan) => {
@@ -21,7 +19,8 @@ function App() {
 
   // Handle data submission from PlanViewer (simulate the form submission)
   const handleFormSubmit = (data) => {
-    setReportData((prevData) => [...prevData, data]); // Add new data to reportData array
+    // Placeholder function for handling form data
+    console.log(data);
   };
 
   return (
@@ -70,14 +69,6 @@ function App() {
             mode={mode}
             onFormSubmit={handleFormSubmit} // Capture the data from PlanViewer
           />
-        )}
-
-        {/* If reportData exists, show ReportTable */}
-        {reportData.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-2xl font-bold text-white mb-4">Rapport Exportable</h2>
-            <ReportTable data={reportData} /> {/* Pass the collected report data */}
-          </div>
         )}
       </main>
 

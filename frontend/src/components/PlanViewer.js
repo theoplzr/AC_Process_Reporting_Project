@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import FormPopup from './FormPopup';
-import { FiRefreshCw } from 'react-icons/fi'; // Icon for resetting points
-import jsPDF from 'jspdf';
-import 'jspdf-autotable'; // Plugin for structured table in PDF
+import { FiRefreshCw } from 'react-icons/fi';
 
 const PlanViewer = ({ planUrl, mode }) => {
   const [formVisible, setFormVisible] = useState(false);
@@ -50,7 +48,7 @@ const PlanViewer = ({ planUrl, mode }) => {
 
   // Reset all points
   const resetPoints = () => {
-    setPoints([]); // Reset points array
+    setPoints([]);
   };
 
   // Define color of points based on severity
@@ -67,87 +65,6 @@ const PlanViewer = ({ planUrl, mode }) => {
       default:
         return 'bg-gray-400';
     }
-  };
-
-  // Generate a PDF summarizing point data in a table format, including images
-  const generatePDF = () => {
-    const doc = new jsPDF('p', 'mm', 'a4');
-
-    // Title and Intro Text
-    doc.setFontSize(18);
-    doc.setTextColor(0, 122, 255); // Tailwind's blue-500 equivalent
-    doc.text('Rapport d\'Inspection', 14, 22);
-
-    doc.setFontSize(12);
-    doc.setTextColor(75, 85, 99); // Tailwind's gray-700 equivalent
-    doc.text('Ce document contient les observations des points inspectés.', 14, 32);
-
-    // Table headers
-    const headers = [
-      ['Observation', 'Description', 'Photo', 'Cause', 'Gravité', 'Recommandations'],
-    ];
-
-    // Create table rows including image
-    const rows = points.map((point, index) => {
-      const row = [
-        point.data.zoneName || 'N/A',
-        point.data.damageDescription || 'Aucune observation',
-        '', // Leave space for image (will be added later)
-        point.data.probableCause || 'Non spécifiée',
-        point.data.severity || 'Non spécifiée',
-        point.data.longTermRecommendations || 'Pas de recommandations',
-      ];
-
-      return row;
-    });
-
-    // Add table to the PDF
-    doc.autoTable({
-      startY: 40,
-      head: headers,
-      body: rows,
-      theme: 'grid', // Styled table similar to screenshot
-      headStyles: {
-        fillColor: [0, 122, 255], // Tailwind blue-500
-        textColor: [255, 255, 255], // White text
-      },
-      bodyStyles: {
-        textColor: [75, 85, 99], // Tailwind gray-700
-      },
-      alternateRowStyles: {
-        fillColor: [240, 240, 240], // Light gray for alternate rows
-      },
-      didDrawCell: function (data) {
-        // Add images to the third column if available
-        const point = points[data.row.index];
-        if (data.column.index === 2 && point.data.photos && point.data.photos.length > 0) {
-          const img = point.data.photos[0]; // Assuming the first image
-          
-          // Ensure the image is a valid base64 or URL
-          if (typeof img === 'string' && img.startsWith('data:image/')) {
-            const imgWidth = 20;
-            const imgHeight = 20;
-            const xPos = data.cell.x + 2; // Add a small padding
-            const yPos = data.cell.y + 2;
-
-            // Ensure the image coordinates and image data are valid
-            if (img && xPos >= 0 && yPos >= 0) {
-              doc.addImage(img, 'JPEG', xPos, yPos, imgWidth, imgHeight);
-            }
-          }
-        }
-      },
-    });
-
-    // Footer: Generation date
-    const date = new Date().toLocaleDateString();
-    doc.setFontSize(10);
-    doc.setTextColor(75, 85, 99); // Tailwind's gray-700
-    doc.text(`Document généré le: ${date}`, 14, doc.lastAutoTable.finalY + 10);
-    doc.text('A&C Process - Tous droits réservés.', 14, doc.lastAutoTable.finalY + 16);
-
-    // Save the PDF
-    doc.save('Rapport_Inspection.pdf');
   };
 
   return (
@@ -168,8 +85,7 @@ const PlanViewer = ({ planUrl, mode }) => {
           src={`http://localhost:3307/${planUrl}`}  // URL of the uploaded plan
           alt="Plan"
           onClick={handleClick}
-          className="w-auto h-auto max-w-full rounded-lg cursor-crosshair shadow-xl"
-          style={{ objectFit: 'contain' }}  // Contain the image without distortion
+          className="w-full h-auto rounded-lg cursor-crosshair shadow-xl"
         />
         {points.map((point, index) => (
           <div
@@ -201,16 +117,6 @@ const PlanViewer = ({ planUrl, mode }) => {
         <p className="text-white text-sm mt-4 animate-pulse">
           Cliquez sur l'image pour ajouter un point.
         </p>
-      )}
-
-      {/* Export to PDF Button */}
-      {points.length > 0 && (
-        <button
-          onClick={generatePDF}
-          className="mt-6 bg-blue-500 text-white py-2 px-6 rounded-lg shadow-md hover:bg-blue-600 transition-transform hover:scale-105"
-        >
-          Exporter en PDF
-        </button>
       )}
     </div>
   );
