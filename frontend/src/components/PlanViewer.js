@@ -207,6 +207,19 @@ const PlanViewer = ({ planUrl, mode }) => {
           style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
         />
 
+        {/* Visualize the rectangle being drawn dynamically */}
+        {isDrawing && currentRect && (
+          <div
+            className="absolute border-2 border-blue-500 bg-blue-300 bg-opacity-30"
+            style={{
+              left: `${currentRect.x}px`,
+              top: `${currentRect.y}px`,
+              width: `${currentRect.width}px`,
+              height: `${currentRect.height}px`,
+            }}
+          />
+        )}
+
         {/* Display rectangles */}
         {rectangles.map((rect, index) => (
           <div
