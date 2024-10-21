@@ -181,6 +181,34 @@ const PlanViewer = ({ planUrl, mode }) => {
     }
   };
 
+  // Function to send points and zones to backend to generate the PDF
+  const generatePDF = async () => {
+    try {
+      const response = await fetch('http://localhost:3307/api/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ points, rectangles }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la génération du PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'rapport_points_zones.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (error) {
+      console.error('Erreur lors de la génération du PDF:', error);
+    }
+  };
+
   return (
     <div
       className="flex flex-col items-center bg-gray-900 min-h-screen p-6"
@@ -263,6 +291,14 @@ const PlanViewer = ({ planUrl, mode }) => {
           </div>
         )}
       </div>
+
+        {/* Button to generate PDF */}
+        <button
+        onClick={generatePDF}
+        className="mt-4 bg-blue-600 text-white py-2 px-6 rounded-lg shadow-lg hover:bg-blue-700 transition-transform hover:scale-105"
+      >
+        Télécharger PDF
+      </button>
 
       {!points.length && (
         <p className="text-white text-sm mt-4 animate-pulse">
