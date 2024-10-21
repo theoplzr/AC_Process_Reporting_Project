@@ -2,41 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { FiXCircle, FiSave, FiTrash2 } from 'react-icons/fi';
 
 const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage }) => {
-  // Champs partagés
-  const [zoneName, setZoneName] = useState('');
-  const [severity, setSeverity] = useState('green');
-  const [photos, setPhotos] = useState([]); // Store image files
-  const [previews, setPreviews] = useState([]); // Store image preview URLs
-  const [photoDescriptions, setPhotoDescriptions] = useState([]);
+  // États pour gérer les valeurs des champs du formulaire
+  const [zoneName, setZoneName] = useState(''); // Nom de la zone
+  const [severity, setSeverity] = useState('green'); // Niveau de gravité (par défaut : vert)
+  const [photos, setPhotos] = useState([]); // Stockage des fichiers image chargés
+  const [previews, setPreviews] = useState([]); // Stockage des aperçus des images chargées
+  const [photoDescriptions, setPhotoDescriptions] = useState([]); // Stockage des descriptions des photos
 
-  // Champs Supervision
-  const [materials, setMaterials] = useState([{ material: '', thickness: '' }]);
-  const [generalAppreciation, setGeneralAppreciation] = useState('');
-  const [stepDone, setStepDone] = useState('');
-  const [workPlanning, setWorkPlanning] = useState('');
-  const [improvements, setImprovements] = useState('');
-  const [reserve, setReserve] = useState('');
+  // Champs spécifiques à la supervision
+  const [materials, setMaterials] = useState([{ material: '', thickness: '' }]); // Tableau pour stocker les matériaux et leur épaisseur
+  const [generalAppreciation, setGeneralAppreciation] = useState(''); // Appréciation générale
+  const [stepDone, setStepDone] = useState(''); // Étape réalisée
+  const [workPlanning, setWorkPlanning] = useState(''); // Planification des travaux
+  const [improvements, setImprovements] = useState(''); // Points d'amélioration
+  const [reserve, setReserve] = useState(''); // Durée de réserve
 
-  // Champs Expertise
-  const [expertiseMaterials, setExpertiseMaterials] = useState([{ material: '', thickness: '' }]);
-  const [age, setAge] = useState('');
-  const [damageNature, setDamageNature] = useState('');
-  const [damageDescription, setDamageDescription] = useState('');
-  const [probableCause, setProbableCause] = useState('');
-  const [potentialOrigins, setPotentialOrigins] = useState('');
-  const [immediateRecommendations, setImmediateRecommendations] = useState('');
-  const [longTermRecommendations, setLongTermRecommendations] = useState('');
+  // Champs spécifiques à l'expertise
+  const [expertiseMaterials, setExpertiseMaterials] = useState([{ material: '', thickness: '' }]); // Matériaux analysés pour l'expertise
+  const [age, setAge] = useState(''); // Âge des réparations
+  const [damageNature, setDamageNature] = useState(''); // Nature de l'endommagement
+  const [damageDescription, setDamageDescription] = useState(''); // Description de l'endommagement
+  const [probableCause, setProbableCause] = useState(''); // Cause probable de l'endommagement
+  const [potentialOrigins, setPotentialOrigins] = useState(''); // Origines potentielles de l'endommagement
+  const [immediateRecommendations, setImmediateRecommendations] = useState(''); // Recommandations immédiates
+  const [longTermRecommendations, setLongTermRecommendations] = useState(''); // Recommandations à long terme
 
-  // Load existing data (if any)
+  // Charger les données existantes si disponibles
   useEffect(() => {
     if (existingData) {
+      // Remplissage des champs avec les données existantes pour la modification
       setZoneName(existingData.zoneName || '');
       setSeverity(existingData.severity || 'green');
       setPhotos(existingData.photos || []);
-      setPreviews(existingData.photos ? existingData.photos.map(photo => URL.createObjectURL(photo)) : []); // Create previews for existing photos
+      setPreviews(existingData.photos ? existingData.photos.map(photo => URL.createObjectURL(photo)) : []);
       setPhotoDescriptions(existingData.photoDescriptions || []);
 
-      // Champs Supervision
+      // Données spécifiques à la supervision
       setMaterials(existingData.materials || [{ material: '', thickness: '' }]);
       setGeneralAppreciation(existingData.generalAppreciation || '');
       setStepDone(existingData.stepDone || '');
@@ -44,7 +45,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
       setImprovements(existingData.improvements || '');
       setReserve(existingData.reserve || '');
 
-      // Champs Expertise
+      // Données spécifiques à l'expertise
       setExpertiseMaterials(existingData.expertiseMaterials || [{ material: '', thickness: '' }]);
       setAge(existingData.age || '');
       setDamageNature(existingData.damageNature || '');
@@ -56,23 +57,23 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
     }
   }, [existingData]);
 
-  // Handle adding new photos and generating previews
+  // Gestion de l'ajout de nouvelles photos et génération des aperçus
   const handlePhotoChange = (event) => {
-    const files = Array.from(event.target.files); // Convert FileList to array
-    const newPhotos = [...photos, ...files]; // Add new files to the state
+    const files = Array.from(event.target.files); // Conversion de FileList en tableau
+    const newPhotos = [...photos, ...files]; // Ajouter les nouveaux fichiers dans l'état
     setPhotos(newPhotos);
 
-    const newPreviews = files.map((file) => URL.createObjectURL(file)); // Generate new previews for the files
-    setPreviews((prevPreviews) => [...prevPreviews, ...newPreviews]); // Add new previews to existing ones
+    const newPreviews = files.map((file) => URL.createObjectURL(file)); // Génération des aperçus pour les nouveaux fichiers
+    setPreviews((prevPreviews) => [...prevPreviews, ...newPreviews]); // Ajouter les nouveaux aperçus
   };
 
-  // Handle deleting a photo
+  // Gestion de la suppression d'une photo
   const handleDeletePhoto = (index) => {
     const newPhotos = [...photos];
     const newPreviews = [...previews];
     const newDescriptions = [...photoDescriptions];
-    
-    // Remove the specific photo and preview
+
+    // Suppression de la photo, de l'aperçu et de la description correspondante
     newPhotos.splice(index, 1);
     newPreviews.splice(index, 1);
     newDescriptions.splice(index, 1);
@@ -82,14 +83,14 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
     setPhotoDescriptions(newDescriptions);
   };
 
-  // Handle description change for a photo
+  // Gestion de la modification de la description d'une photo
   const handleDescriptionChange = (index, value) => {
     const newDescriptions = [...photoDescriptions];
     newDescriptions[index] = value;
     setPhotoDescriptions(newDescriptions);
   };
 
-  // Ajouter une nouvelle ligne au tableau matériaux/épaisseur
+  // Ajouter une nouvelle ligne dans le tableau des matériaux/épaisseur
   const addMaterialRow = (isExpertise) => {
     if (isExpertise) {
       setExpertiseMaterials([...expertiseMaterials, { material: '', thickness: '' }]);
@@ -98,7 +99,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
     }
   };
 
-  // Supprimer une ligne du tableau matériaux/épaisseur
+  // Supprimer une ligne dans le tableau des matériaux/épaisseur
   const removeMaterialRow = (index, isExpertise) => {
     if (isExpertise) {
       const newExpertiseMaterials = [...expertiseMaterials];
@@ -111,7 +112,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
     }
   };
 
-  // Gérer la modification du tableau matériaux/épaisseur
+  // Gestion de la modification des matériaux et épaisseurs
   const handleMaterialChange = (index, field, value, isExpertise) => {
     if (isExpertise) {
       const newMaterials = [...expertiseMaterials];
@@ -124,15 +125,15 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
     }
   };
 
-  // Soumettre le formulaire
+  // Soumission du formulaire
   const handleSubmit = (event) => {
     event.preventDefault();
     const data = mode === 'Supervision'
       ? { zoneName, materials, generalAppreciation, stepDone, workPlanning, improvements, reserve, severity, photos, photoDescriptions }
       : { zoneName, age, expertiseMaterials, damageNature, damageDescription, probableCause, potentialOrigins, immediateRecommendations, longTermRecommendations, severity, photos, photoDescriptions };
     
-    onSubmit(data);
-    onClose();
+    onSubmit(data); // Envoi des données soumises
+    onClose(); // Fermer le formulaire
   };
 
   return (
@@ -148,7 +149,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
       }}
       className="bg-white rounded-xl shadow-lg border border-gray-200 w-full animate-fadeIn"
     >
-      {/* En-tête */}
+      {/* En-tête du formulaire avec le titre et le bouton de fermeture */}
       <div className="flex justify-between items-center bg-gray-100 p-4 rounded-t-xl">
         <h2 className="text-lg font-bold text-gray-700 tracking-wider">{mode === 'Supervision' ? 'Formulaire de Supervision' : 'Formulaire d\'Expertise'}</h2>
         <button
@@ -162,7 +163,6 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
       {/* Contenu du formulaire */}
       <div className="overflow-auto p-6" style={{ maxHeight: '80vh' }}>
         <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
-
           {/* Nom de la zone */}
           <div>
             <input
@@ -174,7 +174,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
             />
           </div>
 
-          {/* Réduction du plan + point (image) */}
+          {/* Image du plan */}
           <div>
             <img
               src={planImage}
@@ -183,17 +183,17 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
             />
           </div>
 
-          {/* Formulaire dynamique basé sur le mode */}
+          {/* Affichage dynamique du formulaire en fonction du mode */}
           {mode === 'Supervision' ? (
             <>
-              {/* Matériaux en place / ajoutés (Tableau) */}
+              {/* Tableau pour les matériaux de supervision */}
               <div>
                 <label className="font-semibold text-gray-700">Matériaux en place / ajoutés :</label>
                 <table className="w-full mt-2 border-collapse border border-gray-300">
                   <thead>
                     <tr>
-                      <th className="border border-gray-300 p-2">Matériau</th>
-                      <th className="border border-gray-300 p-2">Épaisseur</th>
+                      <th className="border border-gray-300 p-2">Nom commercial</th>
+                      <th className="border border-gray-300 p-2">Épaisseur (mm)</th>
                       <th className="border border-gray-300 p-2">Actions</th>
                     </tr>
                   </thead>
@@ -240,7 +240,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
                 </button>
               </div>
 
-              {/* Appreciation générale */}
+              {/* Appréciation générale */}
               <div>
                 <textarea
                   value={generalAppreciation}
@@ -261,7 +261,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
                 />
               </div>
 
-              {/* Planification de travaux */}
+              {/* Planification des travaux */}
               <div>
                 <textarea
                   value={workPlanning}
@@ -271,7 +271,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
                 />
               </div>
 
-              {/* Points d'améliorations */}
+              {/* Points d'amélioration */}
               <div>
                 <textarea
                   value={improvements}
@@ -293,7 +293,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
             </>
           ) : (
             <>
-              {/* Tableau Matériaux Expertise */}
+              {/* Tableau pour les matériaux analysés en expertise */}
               <div>
                 <label className="font-semibold text-gray-700">Matériaux initiaux :</label>
                 <table className="w-full mt-2 border-collapse border border-gray-300">
@@ -347,7 +347,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
                 </button>
               </div>
 
-              {/* Âge */}
+              {/* Champ pour l'âge des réparations */}
               <div>
                 <input
                   type="text"
@@ -378,7 +378,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
                 />
               </div>
 
-              {/* Cause probable */}
+              {/* Cause probable de l'endommagement */}
               <div>
                 <textarea
                   value={probableCause}
@@ -388,7 +388,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
                 />
               </div>
 
-              {/* Origines potentielles */}
+              {/* Origines potentielles de l'endommagement */}
               <div>
                 <textarea
                   value={potentialOrigins}
@@ -398,7 +398,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
                 />
               </div>
 
-              {/* Préconisations immédiates */}
+              {/* Recommandations immédiates */}
               <div>
                 <textarea
                   value={immediateRecommendations}
@@ -408,7 +408,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
                 />
               </div>
 
-              {/* Préconisations long terme */}
+              {/* Recommandations à long terme */}
               <div>
                 <textarea
                   value={longTermRecommendations}
@@ -420,7 +420,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
             </>
           )}
 
-          {/* Gravité */}
+          {/* Sélecteur pour le niveau de gravité */}
           <div>
             <select
               value={severity}
@@ -434,7 +434,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
             </select>
           </div>
 
-          {/* Ajout de photos */}
+          {/* Input pour ajouter des photos */}
           <div>
             <input
               type="file"
@@ -445,7 +445,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
             />
           </div>
 
-          {/* Prévisualisation des photos */}
+          {/* Prévisualisation des photos avec options de suppression et de description */}
           {previews.length > 0 && (
             <div className="mt-4 grid grid-cols-2 gap-4">
               {previews.map((preview, index) => (
@@ -474,7 +474,7 @@ const FormPopup = ({ onSubmit, onDelete, onClose, existingData, mode, planImage 
             </div>
           )}
 
-          {/* Boutons d'action */}
+          {/* Boutons de sauvegarde et de suppression */}
           <div className="flex justify-between mt-6 space-x-4">
             <button
               type="submit"
