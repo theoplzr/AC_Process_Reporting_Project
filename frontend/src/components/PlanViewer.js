@@ -6,15 +6,14 @@ const PlanViewer = ({ planUrl, mode }) => {
   const [formVisible, setFormVisible] = useState(false);
   const [clickPosition, setClickPosition] = useState(null);
   const [points, setPoints] = useState([]);
-  const [rectangles, setRectangles] = useState([]);
+  const [rectangles, setRectangles] = useState([]); // Keep this as is or ensure it's an empty array
+
   const [currentRect, setCurrentRect] = useState(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [draggingPointIndex, setDraggingPointIndex] = useState(null);
   const [editingPoint, setEditingPoint] = useState(null);
   const [hasMoved, setHasMoved] = useState(false);
-
-  
 
   const imgRef = useRef(null);
 
@@ -48,12 +47,10 @@ const PlanViewer = ({ planUrl, mode }) => {
         height: newHeight,
       }));
     } else if (isDragging && draggingPointIndex !== null) {
-      // Get the width and height of the current rectangle
       const rect = rectangles[draggingPointIndex];
       const rectWidth = rect.width;
       const rectHeight = rect.height;
 
-      // Calculate the new X and Y coordinates for the point
       const x = Math.min(
         Math.max(event.clientX - imgRect.left, rectWidth / 2),
         imgRect.width - rectWidth / 2
@@ -63,20 +60,18 @@ const PlanViewer = ({ planUrl, mode }) => {
         imgRect.height - rectHeight / 2
       );
 
-      // Update the point position
       setPoints((prevPoints) =>
         prevPoints.map((point, index) =>
           index === draggingPointIndex ? { ...point, x, y } : point
         )
       );
 
-      // Update the rectangle position to keep the point centered
       setRectangles((prevRectangles) =>
         prevRectangles.map((rect, index) =>
           index === draggingPointIndex
             ? {
                 ...rect,
-                x: x - rectWidth / 2, // Keep the rectangle centered on the point
+                x: x - rectWidth / 2,
                 y: y - rectHeight / 2,
               }
             : rect
@@ -137,17 +132,51 @@ const PlanViewer = ({ planUrl, mode }) => {
   };
 
   // Handle form submission for point data
-  const handleFormSubmit = (data) => {
-    const updatedPoints = editingPoint !== null
-      ? points.map((point, index) =>
-          index === editingPoint ? { ...point, data } : point
-        )
-      : [...points, { x: clickPosition.x, y: clickPosition.y, data, index: points.length + 1 }];
+  // Handle form submission for point data
+  // Handle form submission for point data
+const handleFormSubmit = (data) => {
+  const updatedPoints = editingPoint !== null
+    ? points.map((point, index) =>
+        index === editingPoint ? { ...point, data } : point
+      )
+    : [...points, { x: clickPosition.x, y: clickPosition.y, data, index: points.length + 1 }];
 
-    setPoints(updatedPoints);
-    setFormVisible(false);
-    setCurrentRect(null);
-  };
+  setPoints(updatedPoints);
+  setFormVisible(false);
+
+  // Ensure the area remains after saving
+  if (currentRect && currentRect.width > 0 && currentRect.height > 0) {
+    setRectangles((prevRectangles) => Array.isArray(prevRectangles) ? [...prevRectangles, currentRect] : []);
+  }
+
+  // Reset currentRect after saving
+  setCurrentRect(null);
+};
+
+// Corrected function to check and handle form closing logic
+const handleAreaOrPointClose = () => {
+  if (editingPoint === null) {
+    // This is a new creation (either a point or an area)
+    if (currentRect && currentRect.width > 0 && currentRect.height > 0) {
+      // It's an area, check if there's data
+      if (!points.some((point) => point.x === clickPosition.x && point.y === clickPosition.y)) {
+        // No data saved for this area, remove the last rectangle
+        setRectangles((prevRectangles) => Array.isArray(prevRectangles) ? prevRectangles.slice(0, -1) : []);
+      }
+    }
+  }
+
+  // Close form regardless
+  setFormVisible(false);
+  setCurrentRect(null);
+};
+
+// Handle form close logic
+const handleFormClose = () => {
+  handleAreaOrPointClose();
+};
+
+
 
   // Handle deleting a point and its associated rectangle
   const handleDeletePoint = () => {
@@ -237,7 +266,6 @@ const PlanViewer = ({ planUrl, mode }) => {
           style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
         />
 
-        {/* Visualize the rectangle being drawn dynamically */}
         {isDrawing && currentRect && (
           <div
             className="absolute border-2 border-blue-500 bg-blue-300 bg-opacity-30"
@@ -250,8 +278,7 @@ const PlanViewer = ({ planUrl, mode }) => {
           />
         )}
 
-        {/* Display rectangles */}
-        {rectangles.map((rect, index) => (
+        {Array.isArray(rectangles) && rectangles.map((rect, index) => (
           <div
             key={index}
             className="absolute border-2 border-blue-500 bg-blue-300 bg-opacity-30"
@@ -265,7 +292,8 @@ const PlanViewer = ({ planUrl, mode }) => {
           />
         ))}
 
-        {/* Display points */}
+
+
         {points.map((point, index) => (
           <div
             key={index}
@@ -286,7 +314,7 @@ const PlanViewer = ({ planUrl, mode }) => {
               position={clickPosition}
               onSubmit={handleFormSubmit}
               onDelete={handleDeletePoint}
-              onClose={() => setFormVisible(false)}
+              onClose={handleFormClose}
               existingData={editingPoint !== null ? points[editingPoint].data : null}
               mode={mode}
             />
@@ -294,8 +322,7 @@ const PlanViewer = ({ planUrl, mode }) => {
         )}
       </div>
 
-        {/* Button to generate PDF */}
-        <button
+      <button
         onClick={generatePDF}
         className="mt-4 bg-blue-600 text-white py-2 px-6 rounded-lg shadow-lg hover:bg-blue-700 transition-transform hover:scale-105"
       >
