@@ -14,6 +14,7 @@ const PlanViewer = ({ planUrl, mode }) => {
   const [draggingPointIndex, setDraggingPointIndex] = useState(null);
   const [editingPoint, setEditingPoint] = useState(null);
   const [hasMoved, setHasMoved] = useState(false);
+  const [jsonData, setJsonData] = useState({ points: [], rectangles: [] });
 
   const imgRef = useRef(null);
 
@@ -134,24 +135,28 @@ const PlanViewer = ({ planUrl, mode }) => {
   // Handle form submission for point data
   // Handle form submission for point data
   // Handle form submission for point data
-const handleFormSubmit = (data) => {
-  const updatedPoints = editingPoint !== null
-    ? points.map((point, index) =>
-        index === editingPoint ? { ...point, data } : point
-      )
-    : [...points, { x: clickPosition.x, y: clickPosition.y, data, index: points.length + 1 }];
-
-  setPoints(updatedPoints);
-  setFormVisible(false);
-
-  // Ensure the area remains after saving
-  if (currentRect && currentRect.width > 0 && currentRect.height > 0) {
-    setRectangles((prevRectangles) => Array.isArray(prevRectangles) ? [...prevRectangles, currentRect] : []);
-  }
-
-  // Reset currentRect after saving
-  setCurrentRect(null);
-};
+  const handleFormSubmit = (data) => {
+    const updatedPoints = editingPoint !== null
+      ? points.map((point, index) =>
+          index === editingPoint ? { ...point, data } : point
+        )
+      : [...points, { x: clickPosition.x, y: clickPosition.y, data, index: points.length + 1 }];
+  
+    setPoints(updatedPoints);
+    setFormVisible(false);
+  
+    // Ensure the area remains after saving
+    if (currentRect && currentRect.width > 0 && currentRect.height > 0) {
+      setRectangles((prevRectangles) => [...prevRectangles, currentRect]);
+    }
+  
+    // Update jsonData in memory with the latest points and rectangles
+    setJsonData({ points: updatedPoints, rectangles });
+  
+    // Reset currentRect after saving
+    setCurrentRect(null);
+  };
+  
 
 // Corrected function to check and handle form closing logic
 const handleAreaOrPointClose = () => {
@@ -194,7 +199,9 @@ const handleFormClose = () => {
   const resetPoints = () => {
     setPoints([]);
     setRectangles([]);
+    setJsonData({ points: [], rectangles: [] });  // Reset jsonData here
   };
+  
 
   // Define color of points based on severity
   const getColorFromSeverity = (severity) => {
@@ -220,13 +227,13 @@ const handleFormClose = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ points, rectangles }),
+        body: JSON.stringify({ points: jsonData.points, rectangles: jsonData.rectangles }),  // Use jsonData here
       });
-
+  
       if (!response.ok) {
         throw new Error('Erreur lors de la génération du PDF');
       }
-
+  
       const blob = await response.blob();
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
@@ -239,6 +246,7 @@ const handleFormClose = () => {
       console.error('Erreur lors de la génération du PDF:', error);
     }
   };
+  
 
   return (
     <div
