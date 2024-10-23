@@ -6,7 +6,8 @@ const PlanViewer = ({ planUrl, mode }) => {
   const [formVisible, setFormVisible] = useState(false);
   const [clickPosition, setClickPosition] = useState(null);
   const [points, setPoints] = useState([]);
-  const [rectangles, setRectangles] = useState([]); // Keep this as is or ensure it's an empty array
+  const [rectangles, setRectangles] = useState([]);
+  const [formData, setFormData] = useState({});
 
   const [currentRect, setCurrentRect] = useState(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -17,7 +18,6 @@ const PlanViewer = ({ planUrl, mode }) => {
 
   const imgRef = useRef(null);
 
-  // Start drawing a rectangle on mouse down
   const handleMouseDown = (event) => {
     const rect = imgRef.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
@@ -30,7 +30,6 @@ const PlanViewer = ({ planUrl, mode }) => {
     }
   };
 
-  // Update rectangle size on mouse move
   const handleMouseMove = (event) => {
     const imgRect = imgRef.current.getBoundingClientRect();
 
@@ -82,7 +81,6 @@ const PlanViewer = ({ planUrl, mode }) => {
     }
   };
 
-  // Finish drawing or dragging on mouse up
   const handleMouseUp = () => {
     if (isDrawing) {
       const finalRect = {
@@ -108,77 +106,30 @@ const PlanViewer = ({ planUrl, mode }) => {
     setDraggingPointIndex(null);
   };
 
-  // Start dragging a point
-  const handlePointMouseDown = (index, event) => {
-    setIsDragging(true);
-    setDraggingPointIndex(index);
-    setHasMoved(false);
-    event.stopPropagation();
-  };
+  const handleFormSubmit = (data) => {
+    setFormData(data);
 
-  // Handle clicking on a point to open form (only if it wasn't moved)
-  const handlePointClick = (index) => {
-    if (!hasMoved) {
-      const point = points[index];
-      setClickPosition({ x: point.x, y: point.y });
-      setEditingPoint(index);
-      setFormVisible(true);
-    }
-  };
+    const updatedPoints = editingPoint !== null
+      ? points.map((point, index) =>
+          index === editingPoint ? { ...point, data } : point
+        )
+      : [...points, { x: clickPosition.x, y: clickPosition.y, data, index: points.length + 1 }];
 
-  // Prevent default drag behavior for the image
-  const preventDefaultDrag = (event) => {
-    event.preventDefault();
-  };
+    setPoints(updatedPoints);
+    setFormVisible(false);
 
-  // Handle form submission for point data
-  // Handle form submission for point data
-  // Handle form submission for point data
-const handleFormSubmit = (data) => {
-  const updatedPoints = editingPoint !== null
-    ? points.map((point, index) =>
-        index === editingPoint ? { ...point, data } : point
-      )
-    : [...points, { x: clickPosition.x, y: clickPosition.y, data, index: points.length + 1 }];
-
-  setPoints(updatedPoints);
-  setFormVisible(false);
-
-  // Ensure the area remains after saving
-  if (currentRect && currentRect.width > 0 && currentRect.height > 0) {
-    setRectangles((prevRectangles) => Array.isArray(prevRectangles) ? [...prevRectangles, currentRect] : []);
-  }
-
-  // Reset currentRect after saving
-  setCurrentRect(null);
-};
-
-// Corrected function to check and handle form closing logic
-const handleAreaOrPointClose = () => {
-  if (editingPoint === null) {
-    // This is a new creation (either a point or an area)
     if (currentRect && currentRect.width > 0 && currentRect.height > 0) {
-      // It's an area, check if there's data
-      if (!points.some((point) => point.x === clickPosition.x && point.y === clickPosition.y)) {
-        // No data saved for this area, remove the last rectangle
-        setRectangles((prevRectangles) => Array.isArray(prevRectangles) ? prevRectangles.slice(0, -1) : []);
-      }
+      setRectangles((prevRectangles) => Array.isArray(prevRectangles) ? [...prevRectangles, currentRect] : []);
     }
-  }
 
-  // Close form regardless
-  setFormVisible(false);
-  setCurrentRect(null);
-};
+    setCurrentRect(null);
+  };
 
-// Handle form close logic
-const handleFormClose = () => {
-  handleAreaOrPointClose();
-};
+  const handleFormClose = () => {
+    setFormVisible(false);
+    setCurrentRect(null);
+  };
 
-
-
-  // Handle deleting a point and its associated rectangle
   const handleDeletePoint = () => {
     if (editingPoint !== null) {
       const updatedPoints = points.filter((_, index) => index !== editingPoint);
@@ -190,13 +141,11 @@ const handleFormClose = () => {
     }
   };
 
-  // Reset all points and zones
   const resetPoints = () => {
     setPoints([]);
     setRectangles([]);
   };
 
-  // Define color of points based on severity
   const getColorFromSeverity = (severity) => {
     switch (severity) {
       case 'red':
@@ -212,15 +161,20 @@ const handleFormClose = () => {
     }
   };
 
-  // Function to send points and zones to backend to generate the PDF
   const generatePDF = async () => {
     try {
+      const pdfData = {
+        ...formData,
+        points,
+        rectangles
+      };
+
       const response = await fetch('http://localhost:3307/api/generate-pdf', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ points, rectangles }),
+        body: JSON.stringify(pdfData),
       });
 
       if (!response.ok) {
@@ -231,7 +185,7 @@ const handleFormClose = () => {
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'rapport_points_zones.pdf');
+      link.setAttribute('download', 'rapport_personnalise.pdf');
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
@@ -241,91 +195,38 @@ const handleFormClose = () => {
   };
 
   return (
-    <div
-      className="flex flex-col items-center bg-gray-900 min-h-screen p-6"
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-    >
+    <div className="flex flex-col items-center bg-gray-900 min-h-screen p-6" onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
       <div className="flex justify-end w-full max-w-4xl">
-        <button
-          onClick={resetPoints}
-          className="flex items-center text-white bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg shadow-md transition transform hover:scale-105 mb-4"
-        >
+        <button onClick={resetPoints} className="flex items-center text-white bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg shadow-md transition transform hover:scale-105 mb-4">
           <FiRefreshCw className="mr-2" /> Réinitialiser les points et zones
         </button>
       </div>
 
       <div className="relative w-full max-w-4xl">
-        <img
-          src={`http://localhost:3307/${planUrl}`}
-          alt="Plan"
-          className="rounded-lg cursor-crosshair shadow-xl"
-          ref={imgRef}
-          onMouseDown={handleMouseDown}
-          onDragStart={preventDefaultDrag}
-          style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
-        />
+        <img src={`http://localhost:3307/${planUrl}`} alt="Plan" className="rounded-lg cursor-crosshair shadow-xl" ref={imgRef} onMouseDown={handleMouseDown} onDragStart={(e) => e.preventDefault()} style={{ width: '100%', height: 'auto', objectFit: 'contain' }} />
 
         {isDrawing && currentRect && (
-          <div
-            className="absolute border-2 border-blue-500 bg-blue-300 bg-opacity-30"
-            style={{
-              left: `${currentRect.x}px`,
-              top: `${currentRect.y}px`,
-              width: `${currentRect.width}px`,
-              height: `${currentRect.height}px`,
-            }}
-          />
+          <div className="absolute border-2 border-blue-500 bg-blue-300 bg-opacity-30" style={{ left: `${currentRect.x}px`, top: `${currentRect.y}px`, width: `${currentRect.width}px`, height: `${currentRect.height}px` }} />
         )}
 
         {Array.isArray(rectangles) && rectangles.map((rect, index) => (
-          <div
-            key={index}
-            className="absolute border-2 border-blue-500 bg-blue-300 bg-opacity-30"
-            style={{
-              left: `${rect.x}px`,
-              top: `${rect.y}px`,
-              width: `${rect.width}px`,
-              height: `${rect.height}px`,
-              zIndex: 1,
-            }}
-          />
+          <div key={index} className="absolute border-2 border-blue-500 bg-blue-300 bg-opacity-30" style={{ left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.width}px`, height: `${rect.height}px`, zIndex: 1 }} />
         ))}
 
-
-
         {points.map((point, index) => (
-          <div
-            key={index}
-            className={`absolute rounded-full w-3 h-3 flex items-center justify-center text-white font-bold shadow-lg cursor-pointer transition-transform duration-300 hover:scale-125 ${getColorFromSeverity(
-              point.data.severity
-            )}`}
-            style={{ left: `${point.x - 6}px`, top: `${point.y - 6}px`, zIndex: 2 }}
-            onMouseDown={(event) => handlePointMouseDown(index, event)}
-            onClick={() => handlePointClick(index)}
-          >
+          <div key={index} className={`absolute rounded-full w-3 h-3 flex items-center justify-center text-white font-bold shadow-lg cursor-pointer transition-transform duration-300 hover:scale-125 ${getColorFromSeverity(point.data.severity)}`} style={{ left: `${point.x - 6}px`, top: `${point.y - 6}px`, zIndex: 2 }} onMouseDown={(event) => { setIsDragging(true); setDraggingPointIndex(index); }} onClick={() => { setClickPosition({ x: point.x, y: point.y }); setEditingPoint(index); setFormVisible(true); }}>
             {point.index}
           </div>
         ))}
 
         {formVisible && (
           <div className="transition-opacity duration-300 opacity-100">
-            <FormPopup
-              position={clickPosition}
-              onSubmit={handleFormSubmit}
-              onDelete={handleDeletePoint}
-              onClose={handleFormClose}
-              existingData={editingPoint !== null ? points[editingPoint].data : null}
-              mode={mode}
-            />
+            <FormPopup position={clickPosition} onSubmit={handleFormSubmit} onDelete={handleDeletePoint} onClose={handleFormClose} existingData={editingPoint !== null ? points[editingPoint].data : null} mode={mode} />
           </div>
         )}
       </div>
 
-      <button
-        onClick={generatePDF}
-        className="mt-4 bg-blue-600 text-white py-2 px-6 rounded-lg shadow-lg hover:bg-blue-700 transition-transform hover:scale-105"
-      >
+      <button onClick={generatePDF} className="mt-4 bg-blue-600 text-white py-2 px-6 rounded-lg shadow-lg hover:bg-blue-700 transition-transform hover:scale-105">
         Télécharger PDF
       </button>
 
