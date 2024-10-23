@@ -1,13 +1,12 @@
 require('dotenv').config();  // Charger les variables d'environnement depuis le fichier .env
 const express = require('express');  // Importer Express pour créer l'application
 const cors = require('cors');  // Importer CORS pour gérer les politiques de partage de ressources entre origines
-const sequelize = require('./config/db');  // Importer la connexion à la base de données Sequelize
-const Plan = require('./models/Plan');  // Importer le modèle "Plan" de la base de données
-const FormData = require('./models/FormData');  // Importer le modèle "FormData" de la base de données
 const { PDFDocument, rgb } = require('pdf-lib');  // Importer pdf-lib pour la génération des PDF
+const fs = require('fs');
+const path = require('path');
 
 const app = express();  // Créer une application Express
-const planRoutes = require('./routes/planRoutes');// Importer les routes pour "Plan"
+const planRoutes = require('./routes/planRoutes'); // Importer les routes pour "Plan"
 const port = process.env.PORT || 3307;  // Définir le port d'écoute de l'application, utiliser celui dans l'environnement ou 3307 par défaut
 
 // Middleware pour ajouter les en-têtes CORS personnalisés
@@ -21,8 +20,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Utiliser CORS pour autoriser toutes les origines (accès aux ressources depuis n'importe quelle origine)
-app.use(cors());  // Middleware CORS
+// Utiliser CORS pour autoriser toutes les origines
+app.use(cors());
 
 // Middleware pour parser les requêtes avec un corps en JSON
 app.use(express.json());
@@ -30,58 +29,118 @@ app.use(express.json());
 // Associer les routes /api/plans aux routes définies dans 'planRoutes'
 app.use('/api/plans', planRoutes);
 
-// Route pour générer le fichier PDF
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Route pour générer un fichier PDF en utilisant un modèle existant
 app.post('/api/generate-pdf', async (req, res) => {
-  const { points, rectangles } = req.body;
-
   try {
-    // Créer un nouveau document PDF
-    const pdfDoc = await PDFDocument.create();
+    const { mode } = req.body;
+    const {
+      zoneName, severity, photoDescriptions, materials, generalAppreciation, stepDone,
+      workPlanning, improvements, reserve, expertiseMaterials, age, damageNature,
+      damageDescription, probableCause, potentialOrigins, immediateRecommendations,
+      longTermRecommendations
+    } = req.body;
 
-    // Ajouter une page au PDF
-    const page = pdfDoc.addPage([600, 800]);
+    // Vérifier si le modèle de PDF existe
+    const pdfPath = path.join(__dirname, 'template.pdf');
+    if (!fs.existsSync(pdfPath)) {
+      return res.status(404).send('Le modèle de PDF est introuvable');
+    }
+    
+    const pdfTemplate = fs.readFileSync(pdfPath);
+    const pdfDoc = await PDFDocument.load(pdfTemplate);
+    const pages = pdfDoc.getPages();
+    const firstPage = pages[0];
 
-    // Styles pour le texte
-    const fontSize = 12;
-    const titleSize = 18;
+    let cursorY = 700;
+    const lineSpacing = 20;
 
-    // Titre du PDF
-    page.drawText('Rapport des Points et Zones', {
-      x: 50,
-      y: page.getHeight() - 50,
-      size: titleSize,
-      color: rgb(0, 0.53, 1),
-    });
+    // Ajouter les informations de base
+    if (zoneName) {
+      firstPage.drawText(`Zone : ${zoneName}`, { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+      cursorY -= lineSpacing;
+    }
+    if (severity) {
+      firstPage.drawText(`Niveau de gravité : ${severity}`, { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+      cursorY -= lineSpacing;
+    }
 
-    let cursorY = page.getHeight() - 100;
+    // Vérifier le mode et ajouter les champs spécifiques
+    if (mode === 'Supervision') {
+      if (materials && materials.length > 0) {
+        firstPage.drawText('Matériaux supervisés :', { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+        cursorY -= lineSpacing;
+        materials.forEach((material) => {
+          firstPage.drawText(` - ${material.material}, Épaisseur : ${material.thickness} mm`, { x: 70, y: cursorY, size: 10 });
+          cursorY -= lineSpacing;
+        });
+      }
+      if (generalAppreciation) {
+        firstPage.drawText(`Appréciation générale : ${generalAppreciation}`, { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+        cursorY -= lineSpacing;
+      }
+      if (stepDone) {
+        firstPage.drawText(`Étape réalisée : ${stepDone}`, { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+        cursorY -= lineSpacing;
+      }
+      if (workPlanning) {
+        firstPage.drawText(`Planification des travaux : ${workPlanning}`, { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+        cursorY -= lineSpacing;
+      }
+      if (improvements) {
+        firstPage.drawText(`Points d'amélioration : ${improvements}`, { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+        cursorY -= lineSpacing;
+      }
+      if (reserve) {
+        firstPage.drawText(`Durée de réserve : ${reserve}`, { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+        cursorY -= lineSpacing;
+      }
+    } else if (mode === 'Expertise') {
+      if (expertiseMaterials && expertiseMaterials.length > 0) {
+        firstPage.drawText('Matériaux analysés :', { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+        cursorY -= lineSpacing;
+        expertiseMaterials.forEach((material) => {
+          firstPage.drawText(` - ${material.material}, Épaisseur : ${material.thickness} mm`, { x: 70, y: cursorY, size: 10 });
+          cursorY -= lineSpacing;
+        });
+      }
+      if (age) {
+        firstPage.drawText(`Âge des réparations : ${age}`, { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+        cursorY -= lineSpacing;
+      }
+      if (damageNature) {
+        firstPage.drawText(`Nature de l'endommagement : ${damageNature}`, { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+        cursorY -= lineSpacing;
+      }
+      if (damageDescription) {
+        firstPage.drawText(`Description de l'endommagement : ${damageDescription}`, { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+        cursorY -= lineSpacing;
+      }
+      if (probableCause) {
+        firstPage.drawText(`Cause probable : ${probableCause}`, { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+        cursorY -= lineSpacing;
+      }
+      if (potentialOrigins) {
+        firstPage.drawText(`Origines potentielles : ${potentialOrigins}`, { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+        cursorY -= lineSpacing;
+      }
+      if (immediateRecommendations) {
+        firstPage.drawText(`Recommandations immédiates : ${immediateRecommendations}`, { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+        cursorY -= lineSpacing;
+      }
+      if (longTermRecommendations) {
+        firstPage.drawText(`Recommandations à long terme : ${longTermRecommendations}`, { x: 50, y: cursorY, size: 12, color: rgb(0, 0, 0) });
+        cursorY -= lineSpacing;
+      }
+    }
 
-    // Section des Points
-    page.drawText('Points:', { x: 50, y: cursorY, size: fontSize });
-    cursorY -= 20;
-
-    points.forEach((point, index) => {
-      const pointText = `Point ${index + 1} - X: ${point.x}, Y: ${point.y}, Data: ${JSON.stringify(point.data)}`;
-      page.drawText(pointText, { x: 50, y: cursorY, size: fontSize });
-      cursorY -= 20;
-    });
-
-    cursorY -= 20;
-    page.drawText('Zones:', { x: 50, y: cursorY, size: fontSize });
-    cursorY -= 20;
-
-    // Section des Zones
-    rectangles.forEach((rect, index) => {
-      const rectText = `Zone ${index + 1} - X: ${rect.x}, Y: ${rect.y}, Width: ${rect.width}, Height: ${rect.height}`;
-      page.drawText(rectText, { x: 50, y: cursorY, size: fontSize });
-      cursorY -= 20;
-    });
-
-    // Générer le fichier PDF
+    // Sauvegarder le PDF modifié
     const pdfBytes = await pdfDoc.save();
 
     // Envoyer le PDF en réponse
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=rapport_points_zones.pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=rapport_personnalise.pdf');
     res.send(Buffer.from(pdfBytes));
   } catch (error) {
     console.error('Erreur lors de la génération du PDF:', error);
@@ -89,19 +148,7 @@ app.post('/api/generate-pdf', async (req, res) => {
   }
 });
 
-// Synchroniser la base de données avec Sequelize (force: false permet de ne pas écraser les tables existantes)
-sequelize.sync({ force: false })
-  .then(() => {
-    console.log('Database & tables created!');  // Message de succès si la base de données est synchronisée
-  })
-  .catch((error) => {
-    console.error('Error creating database & tables:', error);  // Message d'erreur en cas d'échec de la synchronisation
-  });
-
 // Lancer le serveur Express et écouter sur le port défini
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);  // Confirmation que le serveur est démarré
+  console.log(`Server running on port ${port}`);
 });
-
-// Servir les fichiers statiques depuis le répertoire "uploads"
-app.use('/uploads', cors(), express.static('uploads'));
